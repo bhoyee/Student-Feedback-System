@@ -24,11 +24,15 @@ namespace API.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<AppUser>> Register(RegisterDto registerDto)
         {
+            
             if (await UserExists(registerDto.Username)) return BadRequest("Username is taken");
+
+            if(await EmailExists(registerDto.Email)) return BadRequest("Only School email is allowed");
             using var hmac = new HMACSHA512();
             var user = new AppUser
             {
                 UserName = registerDto.Username.ToLower(),
+                Email = registerDto.Email.ToLower(),
                 PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password)),
                 PasswordSalt = hmac.Key
             };
@@ -43,5 +47,12 @@ namespace API.Controllers
         {
             return await _context.User.AnyAsync(x => x.UserName == username.ToLower());
         }
+
+         private async Task<bool> EmailExists(string email)
+        {
+            return await _context.User.AnyAsync(x => x.Email == email.ToLower());
+        }
+
+        
     }
 }
