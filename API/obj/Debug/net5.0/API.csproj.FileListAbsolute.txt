@@ -59,3 +59,8 @@ C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\obj\Debug\net5.0\refint
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\obj\Debug\net5.0\API.pdb
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\obj\Debug\net5.0\API.genruntimeconfig.cache
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\obj\Debug\net5.0\ref\API.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\System.IdentityModel.Tokens.Jwt.dll

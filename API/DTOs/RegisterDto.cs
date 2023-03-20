@@ -16,7 +16,7 @@ namespace API.DTOs
 
         [Required]
         [DataType(DataType.EmailAddress)]
-        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@hull\.ac\.uk)$", ErrorMessage = "Registration limited to school domain only")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+(@hull\.ac\.uk)$", ErrorMessage = "Registration limited to school domain only")]
         public string Email { get; set; }
     }
 }
