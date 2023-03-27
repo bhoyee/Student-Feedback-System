@@ -15,5 +15,24 @@ namespace API.Entities
         public byte[] PasswordHash { get; set; }
 
         public byte[] PasswordSalt { get; set; }
+
+        public DateTime Created { get; set; } = DateTime.Now;
+        
+        public DateTime LastActive { get; set; } = DateTime.Now;
+
+        public string Interest { get; set; }
+        
+        public ICollection<Photo> Photos{ get; set; }
+        public int DepartmentId { get; set; }
+
+        public Department Department { get; set; }
+
+
+        /// use case for petition voting
+       // public ICollection<UserLike> LikedByUsers { get; set; }  // who has liked the current login user
+
+        public ICollection<Petition> MyPetitions { get; set; } // the person the current user as liked (petition d person as liked)
+
+
     }
 }

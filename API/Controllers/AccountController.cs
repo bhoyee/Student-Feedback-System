@@ -8,6 +8,7 @@ using API.Data;
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,8 +18,10 @@ namespace API.Controllers
     {
         private readonly DataContext _context;
         public readonly ITokenService _tokenService;
-        public AccountController(DataContext context, ITokenService tokenService)
+        public readonly IMapper _mapper;
+        public AccountController(DataContext context, ITokenService tokenService, IMapper mapper)
         {
+            _mapper = mapper;
             _tokenService = tokenService;
             _context = context;
             
@@ -30,17 +33,18 @@ namespace API.Controllers
             
             if (await UserExists(registerDto.Username)) return BadRequest("Username is taken");
 
-            if(await EmailExists(registerDto.Email)) return BadRequest("Only School email is allowed");
+            if(await EmailExists(registerDto.Email)) return BadRequest("Email is taken");
+            
+            var user  = _mapper.Map<AppUser>(registerDto);
+            
             using var hmac = new HMACSHA512();
-            var user = new AppUser
-            {
-                UserName = registerDto.Username.ToLower(),
-                Email = registerDto.Email.ToLower(),
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password)),
-                PasswordSalt = hmac.Key
-            };
-
-            _context.User.Add(user);
+          
+            user.UserName = registerDto.Username.ToLower();
+            user.DepartmentId = registerDto.DepartmentId;
+            user.Email = registerDto.Email.ToLower();
+            user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password));                user.PasswordSalt = hmac.Key;
+         
+            _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
             return new UserDto
@@ -53,7 +57,8 @@ namespace API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
-            var user = await _context.User
+            var user = await _context.Users
+                .Include(p => p.Photos)
                 .SingleOrDefaultAsync(x => x.UserName == loginDto.Username);
             
             if (user == null) return Unauthorized("Invalid username");
@@ -70,18 +75,19 @@ namespace API.Controllers
             return new UserDto
             {
                 Username = user.UserName,
-                Token = _tokenService.CreateToken(user)
+                Token = _tokenService.CreateToken(user),
+                PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url
             };
         }
 
         private async Task<bool> UserExists(string username)
         {
-            return await _context.User.AnyAsync(x => x.UserName == username.ToLower());
+            return await _context.Users.AnyAsync(x => x.UserName == username.ToLower());
         }
 
          private async Task<bool> EmailExists(string email)
         {
-            return await _context.User.AnyAsync(x => x.Email == email.ToLower());
+            return await _context.Users.AnyAsync(x => x.Email == email.ToLower());
         }
 
         

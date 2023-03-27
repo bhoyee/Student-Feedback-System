@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace API.Data
+namespace API.DTOs
 {
-    public class UserDto
+    public class MemberUpdateDto
     {
         public string Username { get; set; }
-        public string Token { get; set; }
+    
     }
 }
