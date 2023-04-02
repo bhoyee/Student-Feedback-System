@@ -12,6 +12,6 @@ namespace API.DTOs
         
         public string DepartmentName { get; set; }
 
-       // public ICollection<AppUser> AppUser { get; set; }
+        //public ICollection<AppUser> AppUser { get; set; }
     }
 }

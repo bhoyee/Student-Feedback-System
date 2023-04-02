@@ -51,7 +51,11 @@ namespace API.Data
 
         public async Task<IEnumerable<Department>> GetDepartmentsAsync()
         {
-            return await _context.Departments.ToListAsync();
+            //return await _context.Departments.ToListAsync();
+               return await _context.Departments
+               // .Include(u => u.Users)
+               // .Include(x => x.Department)
+                .ToListAsync();
         }
 
         public async Task<bool> SaveAllAsync()

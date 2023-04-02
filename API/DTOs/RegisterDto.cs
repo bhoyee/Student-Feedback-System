@@ -9,12 +9,11 @@ namespace API.DTOs
 {
     public class RegisterDto
     {
-        [Required]
+        
         public string Username { get; set; }
 
         [Required(ErrorMessage ="Password Required")]
         [StringLength(25, ErrorMessage ="Must be between 5 and 25 characters", MinimumLength =5)]
-        [DataType(DataType.Password)]
         public string Password { get; set; }
 
         [Required(ErrorMessage ="Confirm Password is Required")]
@@ -25,7 +24,7 @@ namespace API.DTOs
 
         [Required]
         [DataType(DataType.EmailAddress)]
-        [RegularExpression(@"^[a-zA-Z0-9._%+-]+(@hull\.ac\.uk)$", ErrorMessage = "Registration limited to school domain only")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+(@hull\.ac\.uk)$", ErrorMessage = "Registration limited to school email domain only")]
         public string Email { get; set; }
         
         [Required (ErrorMessage = "Select Your Department")]

@@ -1,17 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using API.Entities;
 using System.Threading.Tasks;
 using API.DTOs;
+using API.Entities;
 
 namespace API.Interfaces
 {
-    public class IVoteRepository
+    public interface IVoteRepository
     {
-        // Task<PetitiionVote> GetPetitionlike(int petitionVoteId, int votedPetitionId);
-        // Task<AppUser> GetUserWithLikes (int userId);
-        // Task<IEnumerable<VoteDto>> GetUserLikes(string predicate, int userId);
-        
+        Task<PetitiionVote> GetUserVote(int petitionVoteId, int votedPetitionId);
+        Task<Petition> GetPetitonWithVotes (int userId);
+        Task<IEnumerable<VoteDto>> GetPetitionVotes(string predicate, int userId);
     }
 }

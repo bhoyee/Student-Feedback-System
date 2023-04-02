@@ -18,5 +18,8 @@ namespace API.DTOs
 
         public int UserId { get; set; }
         public AppUser AppUser { get; set; }
+
+        public int VotesCount { get; set; }
+
     }
 }

@@ -23,6 +23,18 @@ namespace API.DTOs
         public ICollection<PhotoDto> Photo { get; set; }
         public int DepartmentId { get; set; }
 
-        public Department Department { get; set; }
+        public DepartmentDto Department { get; set; }
+
+     //   public DepartmentCreationDTO DeptName { get; set; }
+
+      //  public string Department { get; set; }
+      //  public List<string> Role {get; set;}
+
+        public List<string> Role {get; set;}
+       // public string Role { get; set; }
+
+       // public ICollection<AppRole> Role {get; set;}
+
+    
     }
 }

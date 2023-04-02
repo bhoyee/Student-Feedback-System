@@ -52,9 +52,12 @@ namespace API.Data
                 .SingleOrDefaultAsync();
         }
 
-        public Task<IEnumerable<Petition>> GetPetitionsAsync()
+        public async Task<IEnumerable<Petition>> GetPetitionsAsync()
         {
-            throw new NotImplementedException();
+           return await _context.Petitions.ToListAsync();
+
+           
+                
         }
 
         public async Task<bool> SaveAllAsync()

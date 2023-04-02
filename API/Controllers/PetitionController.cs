@@ -15,10 +15,12 @@ namespace API.Controllers
     {
         public readonly IPetitionRepository _petitionRepository;
         private readonly IMapper _mapper;
+        private readonly IVVoteRepository _voteRepository;
 
         private readonly IUserRepository _userRepository;
-        public PetitionController(IPetitionRepository petitionRepository, IUserRepository userRepository, IMapper mapper)
+        public PetitionController(IPetitionRepository petitionRepository, IUserRepository userRepository, IVVoteRepository voteRepository, IMapper mapper)
         {
+            _voteRepository = voteRepository;
             _mapper = mapper;
             _petitionRepository = petitionRepository;
             _userRepository = userRepository;
@@ -42,5 +44,27 @@ namespace API.Controllers
 
 
         }
+
+        [HttpGet("vote-counts")]
+        public async Task<ActionResult<IEnumerable<VoteDto>>> GetPetitionVoteCounts()
+        {
+            var petitions = await _petitionRepository.GetPetitionsAsync();
+            var voteCounts = new List<VoteDto>();
+            foreach (var petition in petitions)
+            {
+                var voteCount = await _voteRepository.GetUserVotess("voted",petition.UserId);
+                var dto = new VoteDto
+                {
+                    
+                    Id = petition.Id,
+                    Title = petition.Title,
+                   // voteCount = petition.voteCount
+                    
+                };
+                voteCounts.Add(dto);
+            }
+            return Ok(voteCounts);
+        }
+
     }
 }

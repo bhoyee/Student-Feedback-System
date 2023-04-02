@@ -10,5 +10,9 @@ namespace API.Data
         public string Username { get; set; }
         public string Token { get; set; }
         public string PhotoUrl { get; set; }
+
+        public List<string> Role {get; set;}
+
+        //public string deptName { get; set; }
     }
 }
