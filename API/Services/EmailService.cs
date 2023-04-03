@@ -25,7 +25,7 @@ namespace API.Services
     {
         var emailMessage = new MimeMessage();
 
-        emailMessage.From.Add(new MailboxAddress(_smtpSettings.FromName, "s.feedback@outlook.com"));
+        emailMessage.From.Add(new MailboxAddress("Student Feedback", "s.feedback@outlook.com"));
         emailMessage.To.Add(new MailboxAddress("", email));
         emailMessage.Subject = subject;
         emailMessage.Body = new TextPart("html") { Text = message };

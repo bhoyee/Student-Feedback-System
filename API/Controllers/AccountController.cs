@@ -39,84 +39,51 @@ namespace API.Controllers
             
         }
 
-
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
             string pattern = @"-\d{4}";
-            
             Regex regex = new Regex(pattern);
             
-            if (await UserExists(registerDto.Username)) return BadRequest("Username is taken");
+            if (await UserExists(registerDto.Username))
+            {
+                return BadRequest("Username is taken");
+            }
 
-            if(await EmailExists(registerDto.Email)) return BadRequest("Email is taken");
+            if(await EmailExists(registerDto.Email))
+            {
+                return BadRequest("Email is taken");
+            }
+
             Match match = regex.Match(registerDto.Email);
-              
             var user  = _mapper.Map<AppUser>(registerDto);
             user.UserName = registerDto.Username.ToLower();
 
-            if(match.Success)
+            string role = match.Success ? "Student" : "Staff";
+
+            var result = await _userManager.CreateAsync(user, registerDto.Password);
+
+            if (!result.Succeeded)
             {
-                // register as student
-                var result = await _userManager.CreateAsync(user, registerDto.Password);
-
-                if (!result.Succeeded) return BadRequest(result.Errors);
-
-                var roleResult = await _userManager.AddToRoleAsync(user, "Student");
-                
-             
-                if (roleResult.Succeeded)
-                {
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
-
-                    await _emailService.SendEmailAsync(user.Email, "Confirm your email",
-                   $"Please confirm your account by clicking this link: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>");
-
-                }
-                else
-                {
-                    return BadRequest(result.Errors);
-                }
-                
-               // if(!roleResult.Succeeded) return BadRequest(result.Errors);
-
+                return BadRequest(result.Errors);
             }
-            else
+
+            var roleResult = await _userManager.AddToRoleAsync(user, role);
+
+            if (!roleResult.Succeeded)
             {
-                // regiter as staff
-                var result = await _userManager.CreateAsync(user, registerDto.Password);
-
-                if (!result.Succeeded) return BadRequest(result.Errors);
-
-                var roleResult = await _userManager.AddToRoleAsync(user, "Staff");
-
-                if (roleResult.Succeeded)
-                {
-                  //  var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
-
-                    await _emailService.SendEmailAsync(user.Email, "Confirm your email",
-                   $"Please confirm your account by clicking this link: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>");
-
-                }
-                else
-                {
-                    return BadRequest(result.Errors);
-                }
-
-               // if (!roleResult.Succeeded) return BadRequest(result.Errors);
+                return BadRequest(roleResult.Errors);
             }
-            
-               return Ok("Check your email to verify your account");
-            // return new UserDto
-            // {
-            //     Username = user.UserName,
-            //     Token = await _tokenService.CreateToken(user),
-            //    // deptName = user.Department.DepartmentName
-            // };
+
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var callbackUrl = Url.Action("verify-email", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme, host: HttpContext.Request.Host.Value);
+            callbackUrl = callbackUrl.Replace("/Account/verify-email", "/api/Account/verify-email");
+
+            //var callbackUrl = Url.Action("verify-email", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
+
+            await _emailService.SendEmailAsync(user.Email, "Confirm your email", $"Please confirm your Student Feedback Portal account by clicking this link: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>");
+
+            return Ok("Registration Successful . Check email to verify your account");
         }
      
 
@@ -126,21 +93,6 @@ namespace API.Controllers
             var user = await _userManager.Users
                 .Include(p => p.Photos)          
                 .SingleOrDefaultAsync(x => x.UserName == loginDto.Username.ToLower());
-            
-            // if (user == null) return Unauthorized("Invalid username");
-
-            // var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
-
-            // if (!result.Succeeded) return Unauthorized();
-         
-            // return new UserDto
-            // {
-            //     Username = user.UserName,
-            //     Token = await _tokenService.CreateToken(user),
-            //     PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url,                  
-            //     Role = user.UserRoles.Select(R => R.Role.Name).ToList()
-                
-            // };
 
             if (user == null) return Unauthorized("Invalid username");
 
@@ -197,34 +149,6 @@ namespace API.Controllers
                 return BadRequest("Email verification failed.");
             }
         }
-
-        // [HttpGet]
-        // public async Task<IActionResult> ConfirmEmail(string userId, string code)
-        // {
-        //     if (userId == null || code == null)
-        //     {
-        //         return RedirectToAction("Index", "Home");
-        //     }
-
-        //     var user = await _userManager.FindByIdAsync(userId);
-        //     if (user == null)
-        //     {
-        //         return NotFound($"Unable to load user with ID '{userId}'.");
-        //     }
-
-        //     var result = await _userManager.ConfirmEmailAsync(user, code);
-        //     if (result.Succeeded)
-        //     {
-        //         return Ok("email confirm"); // View("ConfirmEmail");
-        //     }
-        //     else
-        //     {
-        //         return BadRequest("Error confirming email.");
-        //     }
-        // }
-
-
-
         
     }
 }
