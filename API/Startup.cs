@@ -20,6 +20,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using API.Extensions;
 using API.Middleware;
+using Microsoft.AspNetCore.Identity;
+using API.Entities;
 
 namespace API
 {
@@ -40,6 +42,11 @@ namespace API
             services.AddApplicationServices(_config);
             services.AddControllers();
             services.AddCors();
+          //  services.AddScoped<IUserTwoFactorTokenProvider<AppUser>, EmailTokenProvider<AppUser>>();
+            //services.AddScoped<IUserTwoFactorTokenProvider<ApplicationUser>, EmailTokenProvider<ApplicationUser>>();
+            
+            // services.AddIdentity<IdentityUser, IdentityRole>()
+            //  .AddDefaultTokenProviders();
             services.AddIdentityServices(_config);
             services.AddSwaggerGen(c =>
             {
@@ -72,7 +79,22 @@ namespace API
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller}/{action}/{id?}");
+                endpoints.MapControllerRoute(
+                    name: "emailConfirmation",
+                    pattern: "{controller=Account}/{action=ConfirmEmail}/{userId}/{code?}");
+                endpoints.MapControllerRoute(
+                    name: "passwordReset",
+                    pattern: "{controller=Account}/{action=ResetPassword}/{code?}");
             });
+
+
+            // app.UseEndpoints(endpoints =>
+            // {
+            //     endpoints.MapControllers();
+            // });
         }
     }
 }

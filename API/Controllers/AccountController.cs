@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using API.Data;
@@ -24,8 +25,12 @@ namespace API.Controllers
         public readonly IMapper _mapper;
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ITokenService tokenService, IMapper mapper)
+
+        private readonly IEmailService _emailService;
+        
+        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ITokenService tokenService, IEmailService emailService, IMapper mapper)
         {
+            _emailService = emailService;
             _signInManager = signInManager;
             _userManager = userManager;
             _mapper = mapper;
@@ -33,6 +38,7 @@ namespace API.Controllers
            // _context = context;
             
         }
+
 
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
@@ -58,7 +64,22 @@ namespace API.Controllers
 
                 var roleResult = await _userManager.AddToRoleAsync(user, "Student");
                 
-                if(!roleResult.Succeeded) return BadRequest(result.Errors);
+             
+                if (roleResult.Succeeded)
+                {
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
+
+                    await _emailService.SendEmailAsync(user.Email, "Confirm your email",
+                   $"Please confirm your account by clicking this link: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>");
+
+                }
+                else
+                {
+                    return BadRequest(result.Errors);
+                }
+                
+               // if(!roleResult.Succeeded) return BadRequest(result.Errors);
 
             }
             else
@@ -69,42 +90,80 @@ namespace API.Controllers
                 if (!result.Succeeded) return BadRequest(result.Errors);
 
                 var roleResult = await _userManager.AddToRoleAsync(user, "Staff");
-                
-                if(!roleResult.Succeeded) return BadRequest(result.Errors);
+
+                if (roleResult.Succeeded)
+                {
+                  //  var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
+
+                    await _emailService.SendEmailAsync(user.Email, "Confirm your email",
+                   $"Please confirm your account by clicking this link: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>link</a>");
+
+                }
+                else
+                {
+                    return BadRequest(result.Errors);
+                }
+
+               // if (!roleResult.Succeeded) return BadRequest(result.Errors);
             }
             
-
-            return new UserDto
-            {
-                Username = user.UserName,
-                Token = await _tokenService.CreateToken(user),
-               // deptName = user.Department.DepartmentName
-            };
+               return Ok("Check your email to verify your account");
+            // return new UserDto
+            // {
+            //     Username = user.UserName,
+            //     Token = await _tokenService.CreateToken(user),
+            //    // deptName = user.Department.DepartmentName
+            // };
         }
-
      
 
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
             var user = await _userManager.Users
-                .Include(p => p.Photos)               
+                .Include(p => p.Photos)          
                 .SingleOrDefaultAsync(x => x.UserName == loginDto.Username.ToLower());
             
+            // if (user == null) return Unauthorized("Invalid username");
+
+            // var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+
+            // if (!result.Succeeded) return Unauthorized();
+         
+            // return new UserDto
+            // {
+            //     Username = user.UserName,
+            //     Token = await _tokenService.CreateToken(user),
+            //     PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url,                  
+            //     Role = user.UserRoles.Select(R => R.Role.Name).ToList()
+                
+            // };
+
             if (user == null) return Unauthorized("Invalid username");
+
+            if (!user.EmailConfirmed)
+                return BadRequest("Email is not confirmed");
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
             if (!result.Succeeded) return Unauthorized();
-         
+
+            //var roleNames = user.UserRoles?.Select(r => r.Role.Name).ToList() ?? new List<string>();
+
+            var roleNames = await _userManager.GetRolesAsync(user);
+
             return new UserDto
             {
                 Username = user.UserName,
                 Token = await _tokenService.CreateToken(user),
-                PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url,                  
-                Role = user.UserRoles.Select(R => R.Role.Name).ToList()
-                
+                PhotoUrl = user.Photos?.FirstOrDefault(x => x.IsMain)?.Url,
+                Role = roleNames.ToList()
             };
+
+
         }
 
         private async Task<bool> UserExists(string username)
@@ -116,6 +175,55 @@ namespace API.Controllers
         {
             return await _userManager.Users.AnyAsync(x => x.Email == email.ToLower());
         }
+
+        [HttpGet("verify-email")]
+        public async Task<IActionResult> VerifyEmail(string userId, string code)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(code))
+            {
+                return BadRequest("User ID and token are required.");
+            }
+
+            // Verify the email token using UserManager
+            var user = await _userManager.FindByIdAsync(userId);
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+
+            if (result.Succeeded)
+            {
+                return Ok("Email verified successfully.");
+            }
+            else
+            {
+                return BadRequest("Email verification failed.");
+            }
+        }
+
+        // [HttpGet]
+        // public async Task<IActionResult> ConfirmEmail(string userId, string code)
+        // {
+        //     if (userId == null || code == null)
+        //     {
+        //         return RedirectToAction("Index", "Home");
+        //     }
+
+        //     var user = await _userManager.FindByIdAsync(userId);
+        //     if (user == null)
+        //     {
+        //         return NotFound($"Unable to load user with ID '{userId}'.");
+        //     }
+
+        //     var result = await _userManager.ConfirmEmailAsync(user, code);
+        //     if (result.Succeeded)
+        //     {
+        //         return Ok("email confirm"); // View("ConfirmEmail");
+        //     }
+        //     else
+        //     {
+        //         return BadRequest("Error confirming email.");
+        //     }
+        // }
+
+
 
         
     }

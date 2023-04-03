@@ -10,6 +10,7 @@ C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\AutoMa
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\CloudinaryDotNet.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Humanizer.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\MailKit.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.AspNetCore.Cryptography.Internal.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
@@ -35,7 +36,10 @@ C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Micros
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Microsoft.OpenApi.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\MimeKit.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\NETCore.MailKit.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Newtonsoft.Json.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\BouncyCastle.Crypto.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\SQLitePCLRaw.batteries_v2.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\SQLitePCLRaw.nativelibrary.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\SQLitePCLRaw.core.dll
@@ -44,8 +48,11 @@ C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Swashb
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\Swashbuckle.AspNetCore.SwaggerUI.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\System.Diagnostics.DiagnosticSource.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\System.Formats.Asn1.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\System.Security.Cryptography.Pkcs.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\System.Text.Encoding.CodePages.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\runtimes\alpine-x64\native\libe_sqlite3.so
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\runtimes\linux-arm\native\libe_sqlite3.so
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\runtimes\linux-arm64\native\libe_sqlite3.so
@@ -59,6 +66,8 @@ C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\runtim
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\runtimes\win-arm64\native\e_sqlite3.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\runtimes\win-x86\native\e_sqlite3.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\runtimes\win\lib\netcoreapp3.1\System.Security.Cryptography.Pkcs.dll
+C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\bin\Debug\net5.0\runtimes\win\lib\netcoreapp3.1\System.Text.Encoding.CodePages.dll
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\obj\Debug\net5.0\API.csproj.AssemblyReference.cache
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\obj\Debug\net5.0\API.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\Bhoyee-pc\Downloads\_school\StudentFeedback\API\obj\Debug\net5.0\API.AssemblyInfoInputs.cache

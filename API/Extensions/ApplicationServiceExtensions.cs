@@ -21,12 +21,14 @@ namespace API.Extensions
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPhotoService, PhotoService>();
             //services.AddScoped<IVoteRepository, VotesRepository>();
+            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IVVoteRepository, VotesRepository>();
             services.AddScoped<LogUserActivity>(); 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IDeparmtentRepo, DepartmentRepository>();
             services.AddScoped<IPetitionRepository, PetitionRepository>();
             services.AddAutoMapper(typeof(AutoMapperProfiles).Assembly);
+            
             services.AddDbContext<DataContext>(options =>
             {
                 options.UseSqlite(config.GetConnectionString("DefaultConnection"));

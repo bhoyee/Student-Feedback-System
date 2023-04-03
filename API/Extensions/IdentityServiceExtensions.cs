@@ -19,13 +19,18 @@ namespace API.Extensions
         {
             services.AddIdentityCore<AppUser>(opt =>
             {
+              
                 opt.Password.RequireNonAlphanumeric = false;
+                opt.SignIn.RequireConfirmedAccount = true;
             })
                 .AddRoles<AppRole>()
+                .AddDefaultTokenProviders()
                 .AddRoleManager<RoleManager<AppRole>>()
                 .AddSignInManager<SignInManager<AppUser>>()
                 .AddRoleValidator<RoleValidator<AppRole>>()
                 .AddEntityFrameworkStores<DataContext>();
+            services.AddScoped<IUserTwoFactorTokenProvider<AppUser>, EmailTokenProvider<AppUser>>();
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
