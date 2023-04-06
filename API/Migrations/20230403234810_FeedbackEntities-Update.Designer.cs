@@ -3,14 +3,16 @@ using System;
 using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230403234810_FeedbackEntities-Update")]
+    partial class FeedbackEntitiesUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -160,9 +162,6 @@ namespace API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("AppUserId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int?>("AssignedToId")
                         .HasColumnType("INTEGER");
 
@@ -178,15 +177,13 @@ namespace API.Migrations
                     b.Property<int>("SenderId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Status")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AppUserId");
 
                     b.HasIndex("AssignedToId");
 
@@ -212,13 +209,7 @@ namespace API.Migrations
                     b.Property<int>("FeedbackId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsPublic")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UserId")
@@ -473,10 +464,6 @@ namespace API.Migrations
 
             modelBuilder.Entity("API.Entities.Feedback", b =>
                 {
-                    b.HasOne("API.Entities.AppUser", null)
-                        .WithMany("Feedbacks")
-                        .HasForeignKey("AppUserId");
-
                     b.HasOne("API.Entities.AppUser", "AssignedTo")
                         .WithMany()
                         .HasForeignKey("AssignedToId");
@@ -630,8 +617,6 @@ namespace API.Migrations
 
             modelBuilder.Entity("API.Entities.AppUser", b =>
                 {
-                    b.Navigation("Feedbacks");
-
                     b.Navigation("Petitions");
 
                     b.Navigation("Photos");

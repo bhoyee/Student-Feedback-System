@@ -1,18 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using API.Data;
 using API.Entities;
 
 namespace API.DTOs
 {
-    public class DepartmentCreationDTO
+    public class DepartmentNameDto
     {
-        public int Id { get; set; }  
         public string DepartmentName { get; set; }
-     
-
+       // public ICollection<Feedback> Feedbacks { get; set; }
+        
     }
 }

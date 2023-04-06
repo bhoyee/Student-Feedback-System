@@ -13,6 +13,7 @@ namespace API.Entities
 
         public ICollection<AppUser> Users { get; set; }
         public ICollection<Petition> Petitions { get; set; }
+        public ICollection<Feedback> Feedbacks { get; set; }
 
 
     }

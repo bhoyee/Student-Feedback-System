@@ -45,7 +45,9 @@ namespace API.Controllers
                 return Ok(users);
         }
 
-        [Authorize(Roles = "Memeber")]
+        
+
+      //  [Authorize(Roles = "Memeber")]
         // api/users/3 or userid
         [HttpGet("{username}", Name = "GetUser")]
         public async Task<ActionResult<MemberDto>> GetUser(string username)

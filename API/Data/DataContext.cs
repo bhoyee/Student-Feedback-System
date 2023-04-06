@@ -27,16 +27,33 @@ namespace API.Data
         public DbSet<Vote> Votes {get; set;}
 
         public DbSet<PetitionReply> PetitionReplies { get; set; }
+
+        public DbSet<Feedback> Feedbacks {get; set;}
+        public DbSet<FeedbackReply> FeedbackReplies {get; set;}
         
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+                builder.Entity<Feedback>()
+                    .Property(f => f.Status)
+                    .HasConversion<int>();
 
                  builder.Entity<AppUser>()
                     .HasMany(d => d.UserRoles)
                     .WithOne(u => u.User)
                     .HasForeignKey(u => u.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                builder.Entity<AppUser>()
+                    .HasOne(u => u.Department)
+                    .WithMany(d => d.Users)
+                    .HasForeignKey(u => u.DepartmentId);
+                
+                builder.Entity<AppUser>()
+                    .HasMany(u => u.Feedbacks)
+                    .WithOne(d => d.Sender)
+                    .HasForeignKey(u => u.SenderId);
 
                 
                 builder.Entity<AppRole>()
@@ -56,6 +73,7 @@ namespace API.Data
                     .WithOne(u => u.Department)
                     .HasForeignKey(u => u.DepartmentId)
                     .OnDelete(DeleteBehavior.Cascade);
+                    
 
                 builder.Entity<Petition>()
                     .HasOne(p => p.AppUser)
@@ -87,6 +105,37 @@ namespace API.Data
                     .WithMany(v => v.Votes)
                     .HasForeignKey(p => p.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+                    
+                
+                builder.Entity<Feedback>()
+                    .HasOne(f => f.Sender)
+                    .WithMany()
+                    .HasForeignKey(f => f.SenderId);
+
+                builder.Entity<Feedback>()
+                    .HasOne(f => f.AssignedTo)
+                    .WithMany()
+                    .HasForeignKey(f => f.AssignedToId);
+
+                builder.Entity<Feedback>()
+                    .HasOne(f => f.Department)
+                    .WithMany(d => d.Feedbacks)
+                    .HasForeignKey(f => f.DepartmentId);
+
+                builder.Entity<Feedback>()
+                    .HasMany(f => f.Replies)
+                    .WithOne(r => r.Feedback)
+                    .HasForeignKey(r => r.FeedbackId);
+
+                builder.Entity<FeedbackReply>()
+                    .HasOne(r => r.User)
+                    .WithMany()
+                    .HasForeignKey(r => r.UserId);
+
+                builder.Entity<Department>()
+                    .HasMany(d => d.Feedbacks)
+                    .WithOne(f => f.Department)
+                    .HasForeignKey(f => f.DepartmentId);
                 
 
              

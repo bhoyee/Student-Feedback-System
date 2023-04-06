@@ -26,6 +26,8 @@ namespace API.Entities
 
         public ICollection<AppUserRole> UserRoles{get; set;}
 
+        public ICollection<Feedback> Feedbacks{get; set;}
+
 
         /// use case for petition voting
       //  public ICollection<Vote> VotedPetitions { get; set; }  // who has liked the current login user

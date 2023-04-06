@@ -2,20 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using API.DTOs;
 using API.Entities;
 using API.Interfaces;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using static API.Controllers.FeedbacksController;
 
 namespace API.Data
 {
     public class DepartmentRepository : IDeparmtentRepo
     {
-        public readonly DataContext _context;
-        public DepartmentRepository(DataContext context)
-        {
-            _context = context;
-            
-        }
+        private readonly DataContext _context;
+         private readonly IMapper _mapper;
+      
+
+    public DepartmentRepository(DataContext context, IMapper mapper)
+    {
+      
+        _context = context;
+        _mapper = mapper;
+    }
         public  async Task<Department> AddDepartment(Department department)
         {
             var result = await _context.Departments.AddAsync(department);
@@ -42,6 +49,8 @@ namespace API.Data
                 // .Include( x => x.)
                 .FindAsync(id);
         }
+
+
 
         public async Task<Department> GetDepartmentByNameAsync(string deptname)
         {
