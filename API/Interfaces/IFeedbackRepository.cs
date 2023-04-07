@@ -19,9 +19,15 @@ namespace API.Interfaces
         Task<IEnumerable<Feedback>> GetFeedbacksByUserIdAsync(int userId);
       //  Task<IEnumerable<Feedback>> GetFeedbackByUserAsync(int userId);
       //  Task<List<Feedback>> GetFeedbacksByDepartmentIdAndStatusAsync(int departmentId, string status);
-      //  Task<List<FeedbackDto>> GetFeedbacksByDepartmentIdAndStatusAsync(int departmentId, FeedbackStatus status);
+        Task<List<FeedbackDto>> GetFeedbacksByDepartmentIdAndStatusAsync(int departmentId, FeedbackStatus status);
 
          Task<int> GetOpenFeedbackCountByDepartmentAsync(int departmentId);
+
+    Task<List<FeedbackDto>> GetAllFeedbacksByDepartmentIdAsync(int departmentId);
+
+
+
+   
 
 
     }

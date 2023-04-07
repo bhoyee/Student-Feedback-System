@@ -11,9 +11,10 @@ namespace API.DTOs
       public int Id { get; set; }
     public string Title { get; set; }
      public string Content { get; set; }
-     public int SnderId { get; set; }
+     public int SenderId { get; set; }
     public string SenderName { get; set; }
-    public string Status { get; set; }
+    
+    public FeedbackStatus Status { get; set; }
 
     public int OpenFeedbackCount { get; set; } // New property to hold the count of feedbacks with an open status for that department
 

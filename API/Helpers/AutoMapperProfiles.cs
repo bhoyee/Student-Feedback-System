@@ -19,7 +19,11 @@ namespace API.Helpers
             CreateMap<Department, DepartmentDisplayDto>();
             CreateMap<DepartmentDto, DepartmentCreationDTO>();
             CreateMap<IEnumerable<DepartmentDisplayDto>, IEnumerable<Department>>();
-CreateMap<IEnumerable<Department>, IEnumerable<DepartmentDisplayDto>>();
+            CreateMap<IEnumerable<Department>, IEnumerable<DepartmentDisplayDto>>();
+
+            CreateMap<AppUser, FeedbackDto>()
+            .ForMember(dest => dest.SenderName, opt => opt.MapFrom(src => src.UserName));
+
 
 
 

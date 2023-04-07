@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
@@ -69,13 +70,70 @@ namespace API.Data
 
         public async Task<FeedbackDto> GetFeedbackByIdAsync(int feedbackId)
         {
-             var feedback = await _context.Feedbacks
+            //  var feedback = await _context.Feedbacks
+            //     .Include(f => f.Department)
+            //     .Include(f => f.Sender)
+            //     .FirstOrDefaultAsync(f => f.Id == feedbackId);
+
+            //  return _mapper.Map<FeedbackDto>(feedback);
+              var feedback = await _context.Feedbacks
                 .Include(f => f.Department)
                 .Include(f => f.Sender)
+                .Include(f => f.AssignedTo)
                 .FirstOrDefaultAsync(f => f.Id == feedbackId);
 
-             return _mapper.Map<FeedbackDto>(feedback);
+            var feedbackDto = _mapper.Map<FeedbackDto>(feedback);
+            feedbackDto.SenderName = feedback.Sender.UserName; // set the senderName property
+            return feedbackDto;
         }
+
+        public async Task<List<FeedbackDto>> GetFeedbacksByDepartmentIdAndStatusAsync(int departmentId, string status)
+        {
+            FeedbackStatus feedbackStatus;
+            if (!Enum.TryParse(status, true, out feedbackStatus))
+            {
+                // handle invalid feedback status string
+                return null;
+            }
+
+            var feedbacks = await _context.Feedbacks
+                .Include(f => f.Department)
+                .Include(f => f.Sender)
+                .Include(f => f.AssignedTo)
+                .Where(f => f.DepartmentId == departmentId && f.Status == feedbackStatus)
+                .Select(f => new FeedbackDto
+                {
+                    Id = f.Id,
+                    Title = f.Title,
+                    Content = f.Content,
+                    SenderId = f.SenderId,
+                    SenderName = f.Sender.UserName,
+                    Status = f.Status,
+                    OpenFeedbackCount = f.Department.Feedbacks.Count(f => f.Status == FeedbackStatus.Open),
+                    AssignedToName = f.AssignedTo.UserName,
+                    DateCreated = f.DateCreated
+                })
+                .ToListAsync();
+
+            return feedbacks;
+        }
+
+        // public async Task<List<Feedback>> GetFeedbacksByDepartmentIdAsync(int departmentId)
+        // {
+        //     return await _context.Feedbacks
+        //         .Include(f => f.Department)
+        //         .Include(f => f.Sender)
+        //         .Include(f => f.AssignedTo)
+        //         .Where(f => f.DepartmentId == departmentId)
+        //         .ToListAsync();
+        // }
+
+
+
+
+
+
+
 
         // public async Task<IEnumerable<FeedbackDto>> GetFeedbacksAsync()
         // {
@@ -87,21 +145,32 @@ namespace API.Data
         //     return _mapper.Map<IEnumerable<FeedbackDto>>(feedbacks);
         // }
         public async Task<List<string>> GetFeedbacksAsync(string username)
-{
-    var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName == username);
+        {
+            var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName == username);
 
-    var feedbacks = await _context.Feedbacks
-        .Where(x => x.SenderId == user.Id)
-        .Select(x => x.Title)
-        .ToListAsync();
+            var feedbacks = await _context.Feedbacks
+                .Where(x => x.SenderId == user.Id)
+                .Select(x => x.Title)
+                .ToListAsync();
 
-    return feedbacks;
-}
+            return feedbacks;
+        }
 
         public Task<IEnumerable<FeedbackDto>> GetFeedbacksAsync()
         {
             throw new NotImplementedException();
         }
+
+        public async Task<List<Feedback>> GetFeedbacksByDeptIdAsync(int departmentId)
+        {
+            return await _context.Feedbacks
+                .Include(f => f.Department)
+                .Include(f => f.Sender)
+                .Include(f => f.AssignedTo)
+                .Where(f => f.DepartmentId == departmentId)
+                .ToListAsync();
+        }
+
 
         public async Task<IEnumerable<FeedbackDto>> GetFeedbacksByDepartmentIdAsync(int departmentId)
         {
@@ -164,15 +233,54 @@ namespace API.Data
             return count;
         }
 
-        // public async Task<List<FeedbackDto>> GetFeedbacksByDepartmentIdAndStatusAsync(int departmentId, FeedbackStatus status)
-        // {
-        //     // var feedbacks = await _context.Feedbacks
-        //     //     .Where(f => f.DepartmentId == departmentId)
-        //     //     .Where(f => f.Status == status)
-        //     //     .ToListAsync();
+        public async Task<List<FeedbackDto>> GetFeedbacksByDepartmentIdAndStatusAsync(int departmentId, FeedbackStatus status)
+        {
+            var feedbacks = await _context.Feedbacks
+                .Where(f => f.DepartmentId == departmentId)
+                .Where(f => f.Status == status)
+                .ToListAsync();
 
-        //     // return "te";//feedbacks;
-        // }
+            var feedbackDtos = _mapper.Map<List<FeedbackDto>>(feedbacks);
+
+            return feedbackDtos;
+        }
+
+        public async Task<List<Feedback>> GetAllhhFeedbacksByDeptIdAsync(int departmentId)
+        {
+            return await _context.Feedbacks
+                .Include(f => f.Department)
+                .Include(f => f.Sender)
+                .Include(f => f.AssignedTo)
+                .Where(f => f.DepartmentId == departmentId)
+                .ToListAsync();
+        }
+
+        public async Task<List<FeedbackDto>> GetAllFeedbacksByDepartmentIdAsync(int departmentId)
+        {
+            var feedbacks = await _context.Feedbacks
+                .Where(f => f.DepartmentId == departmentId)
+                .ToListAsync();
+
+            var feedbackDtos = feedbacks.Select(f => new FeedbackDto
+            {
+               Id = f.Id,
+    Title = f.Title,
+    Content = f.Content,
+    SenderId = f.SenderId,
+    SenderName = f.Sender != null ? f.Sender.UserName : null,
+    Status = f.Status,
+    DateCreated = f.DateCreated,
+    //OpenFeedbackCount = f.Feedbacks.Count(f => f.Status == FeedbackStatus.Open),
+    DepartmentName = f.Department != null ? f.Department.DepartmentName : null,
+   
+            }).ToList();
+
+            return feedbackDtos;
+        }
+
+       
+
+
 
         // public Task<List<Feedback>> GetFeedbacksByDepartmentIdAndStatusAsync(int departmentId, string status)
         // {

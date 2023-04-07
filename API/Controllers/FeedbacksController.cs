@@ -101,21 +101,21 @@ namespace API.Controllers
         //     var feedbackDto = await _feedbackRepository.CreateFeedbackAsync(feedbackCreateDto);
         //     return CreatedAtAction(nameof(GetFeedback), new { departmentId = feedbackCreateDto.DepartmentId, feedbackId = feedbackDto.Id }, feedbackDto);
         // }
+      
         [HttpPost]
-[HttpPost]
-public async Task<ActionResult<FeedbackDto>> CreateFeedback(FeedbackCreateDto feedbackCreateDto)
-{
-    try
-    {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-        var feedback = await _feedbackRepository.CreateFeedbackAsync(feedbackCreateDto, userId);
-        return CreatedAtRoute(nameof(GetFeedback), new { id = feedback.Id }, feedback);
-    }
-    catch(Exception ex)
-    {
-        return StatusCode(500, new { message = ex.Message });
-    }
-}
+        public async Task<ActionResult<FeedbackDto>> CreateFeedback(FeedbackCreateDto feedbackCreateDto)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var feedback = await _feedbackRepository.CreateFeedbackAsync(feedbackCreateDto, userId);
+                return CreatedAtRoute(nameof(GetFeedback), new { id = feedback.Id }, feedback);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
 
 
 
