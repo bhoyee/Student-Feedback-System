@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using API.Data;
 using API.DTOs;
 using API.Entities;
+using API.Extensions;
 using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
@@ -101,13 +102,13 @@ namespace API.Controllers
         //     var feedbackDto = await _feedbackRepository.CreateFeedbackAsync(feedbackCreateDto);
         //     return CreatedAtAction(nameof(GetFeedback), new { departmentId = feedbackCreateDto.DepartmentId, feedbackId = feedbackDto.Id }, feedbackDto);
         // }
-      
+
         [HttpPost]
         public async Task<ActionResult<FeedbackDto>> CreateFeedback(FeedbackCreateDto feedbackCreateDto)
         {
             try
-            {
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            {               
+                var userId = User.GetUserId();
                 var feedback = await _feedbackRepository.CreateFeedbackAsync(feedbackCreateDto, userId);
                 return CreatedAtRoute(nameof(GetFeedback), new { id = feedback.Id }, feedback);
             }
@@ -116,6 +117,23 @@ namespace API.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
+      
+        // [HttpPost]
+        // public async Task<ActionResult<FeedbackDto>> CreateFeedback(FeedbackCreateDto feedbackCreateDto)
+        // {
+        //     try
+        //     {
+        //         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        //         if(userId == 0) { return BadRequest("no user identiy"); }
+        //         var feedback = await _feedbackRepository.CreateFeedbackAsync(feedbackCreateDto, userId);
+        //         return CreatedAtRoute(nameof(GetFeedback), new { id = feedback.Id }, feedback);
+        //     }
+        //     catch(Exception ex)
+        //     {
+        //         return StatusCode(500, new { message = ex.Message });
+        //     }
+        // }
 
 
 

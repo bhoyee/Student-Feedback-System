@@ -196,6 +196,54 @@ public string SerializeFeedbackDtosToJson(IEnumerable<FeedbackDto> feedbackDtos)
     return json;
 }
 
+// Assuming you have a FeedbackRepository class with a GetFeedbackByIdAsync method
+[HttpGet("{deptID}/feedbacks/{feedbackId}")]
+// public async Task<IActionResult> GetFeedback(int deptID, int feedbackId)
+// {
+//     var feedback = await _feedbackRepository.GetFeedbackByIdAsync(feedbackId);
+
+//     if (feedback == null)
+//     {
+//         return NotFound($"Feedback with ID {feedbackId} not found");
+//     }
+
+//     if (feedback.DepartmentId != deptID)
+//     {
+//         return BadRequest("Feedback does not belong to the specified department");
+//     }
+
+//     var feedbackDto = _mapper.Map<FeedbackDto>(feedback);
+//     return Ok(feedbackDto);
+// }
+public async Task<ActionResult<FeedbackDto>> GetFeedback(int deptID, int feedbackId)
+{
+    var feedback = await _feedbackRepository.GetFeedbackByIdAsync(feedbackId);
+    if (feedback == null)
+    {
+        return NotFound($"Feedback with ID {feedbackId} not found");
+    }
+   if (feedback.DepartmentId != deptID)
+    {
+        return BadRequest($"Feedback with ID {feedbackId} does not belong to department with ID {deptID}");
+    }
+
+    var department = await _DepartmentRepo.GetDepartmentByIdAsync(deptID);
+
+    if (department == null)
+    {
+        return NotFound();
+    }
+
+    var feedbackToReturn = _mapper.Map<FeedbackDto>(feedback);
+    //feedbackToReturn.Deparmtent = _mapper.Map<DepartmentDto>(department);
+
+    return Ok(feedbackToReturn);
+}
+
+
+
+
+
 
 
         // api/departments/3 or userid

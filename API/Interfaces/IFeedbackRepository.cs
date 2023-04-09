@@ -14,6 +14,8 @@ namespace API.Interfaces
         Task<IEnumerable<FeedbackDto>> GetFeedbacksByDepartmentIdAsync(int departmentId);
       //  Task<FeedbackDto> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto);
         Task<FeedbackDto> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId);
+        // Task<Feedback> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId);
+
         Task UpdateFeedbackAsync(int feedbackId, FeedbackUpdateDto feedbackUpdateDto);
         Task DeleteFeedbackAsync(int feedbackId);
         Task<IEnumerable<Feedback>> GetFeedbacksByUserIdAsync(int userId);

@@ -12,6 +12,8 @@ namespace API.Entities
         public string Content { get; set; }
         public int SenderId { get; set; }
         public AppUser Sender { get; set; }
+        public bool IsAnonymous { get; set; } // Add this field to indicate whether the sender is anonymous or not
+
         public int? AssignedToId { get; set; }
         public AppUser AssignedTo { get; set; }
         public FeedbackStatus Status { get; set; }

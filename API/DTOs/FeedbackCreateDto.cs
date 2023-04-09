@@ -12,6 +12,8 @@ namespace API.DTOs
         public int DepartmentId { get; set; }
         public int SenderId { get; set; }
       //  public DateTime CreateDate {get; set;}
-        public string Status { get; set; }
+        public string Status { get; set; } = '0'.ToString();
+        public bool IsAnonymous { get; set; }
+
     }
 }

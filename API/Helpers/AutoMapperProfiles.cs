@@ -17,6 +17,7 @@ namespace API.Helpers
             CreateMap<Department, DepartmentCreationDTO>();
             CreateMap<DepartmentDisplayDto, Department>();
             CreateMap<Department, DepartmentDisplayDto>();
+           //  CreateMap<DepartmentDto, DepartmentDisplayDto>();
             CreateMap<DepartmentDto, DepartmentCreationDTO>();
             CreateMap<IEnumerable<DepartmentDisplayDto>, IEnumerable<Department>>();
             CreateMap<IEnumerable<Department>, IEnumerable<DepartmentDisplayDto>>();
