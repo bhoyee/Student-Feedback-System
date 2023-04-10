@@ -16,7 +16,7 @@ namespace API.Entities
 
         public int? AssignedToId { get; set; }
         public AppUser AssignedTo { get; set; }
-        public FeedbackStatus Status { get; set; }
+        public FeedbackStatus Status { get; set; } = 0;
         public int DepartmentId { get; set; }
         public Department Department { get; set; }
         public DateTime DateCreated { get; set; }  = DateTime.Now;

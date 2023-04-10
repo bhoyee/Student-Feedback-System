@@ -24,8 +24,10 @@ namespace API.Controllers
         private readonly IFeedbackReplyRepository _feedbackReplyRepository;
         public readonly UserManager<AppUser> _userManager;
         public readonly DataContext _context;
-        public FeedbacksController(DataContext context, UserManager<AppUser> userManager, IMapper mapper, IFeedbackRepository feedbackRepository, IFeedbackReplyRepository feedbackReplyRepository)
+        private readonly IDeparmtentRepo _deparmtentRepo;
+        public FeedbacksController(DataContext context, UserManager<AppUser> userManager, IMapper mapper, IFeedbackRepository feedbackRepository, IFeedbackReplyRepository feedbackReplyRepository, IDeparmtentRepo deparmtentRepo)
         {       
+            _deparmtentRepo = deparmtentRepo;
             _context = context;
             
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -79,7 +81,7 @@ namespace API.Controllers
 
 
         [HttpGet("{feedbackId}")]
-        public async Task<IActionResult> GetFeedback(int departmentId, int feedbackId)
+        public async Task<IActionResult> GetFeedbackById(int departmentId, int feedbackId)
         {
             var feedback = await _feedbackRepository.GetFeedbackByIdAsync(feedbackId);
             if (feedback == null)
@@ -103,20 +105,42 @@ namespace API.Controllers
         //     return CreatedAtAction(nameof(GetFeedback), new { departmentId = feedbackCreateDto.DepartmentId, feedbackId = feedbackDto.Id }, feedbackDto);
         // }
 
-        [HttpPost]
-        public async Task<ActionResult<FeedbackDto>> CreateFeedback(FeedbackCreateDto feedbackCreateDto)
-        {
-            try
-            {               
-                var userId = User.GetUserId();
-                var feedback = await _feedbackRepository.CreateFeedbackAsync(feedbackCreateDto, userId);
-                return CreatedAtRoute(nameof(GetFeedback), new { id = feedback.Id }, feedback);
-            }
-            catch(Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
-        }
+    //    [HttpPost]
+    //     public async Task<ActionResult<FeedbackDto>> CreateFeedback(FeedbackCreateDto feedbackCreateDto)
+    //     {
+    //         try
+    //         {               
+    //             var userId = User.GetUserId();
+    //             var feedback = await _feedbackRepository.CreateFeedbackAsync(feedbackCreateDto, userId);
+    //             return CreatedAtRoute(nameof(GetFeedback), new { id = feedback.Id }, feedback);
+    //         }
+    //         catch(Exception ex)
+    //         {
+    //             return StatusCode(500, new { message = ex.Message });
+    //         }
+    //     }
+[HttpPost]
+public async Task<ActionResult<FeedbackDto>> CreateFeedback(Feedback feedback)
+{
+    var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+    var department = await _deparmtentRepo.GetDepartmentByIdAsync(feedback.DepartmentId);
+    if (department == null)
+        return BadRequest("Invalid department id");
+
+    feedback.SenderId = userId;
+    feedback.Status = FeedbackStatus.Open;
+    feedback.DateCreated = DateTime.Now;
+
+    await _feedbackRepository.CreateFeedbackAsync(feedback);
+    await _feedbackRepository.SaveChangesAsync();
+
+    var feedbackDto = _mapper.Map<FeedbackDto>(feedback);
+    return Ok("Inserted successfully");
+
+   // return CreatedAtAction(nameof(GetFeedbackById), new { id = feedbackDto.Id }, feedbackDto);
+}
+
 
       
         // [HttpPost]

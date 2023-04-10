@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using API.Entities;
 
 namespace API.DTOs
 {
@@ -11,8 +12,9 @@ namespace API.DTOs
         public string Content { get; set; }
         public int DepartmentId { get; set; }
         public int SenderId { get; set; }
+        public FeedbackStatus Status { get; set; }
       //  public DateTime CreateDate {get; set;}
-        public string Status { get; set; } = '0'.ToString();
+     //   public int Status { get; set; } 
         public bool IsAnonymous { get; set; }
 
     }

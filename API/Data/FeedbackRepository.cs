@@ -54,43 +54,43 @@ namespace API.Data
 
     //     return feedbackDto;
     // }
-    public async Task<FeedbackDto> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId)
-{
+//     public async Task<FeedbackDto> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId)
+// {
     
     
-    if (feedbackCreateDto == null)
-    {
-        throw new ArgumentNullException(nameof(feedbackCreateDto));
-    }
+//     if (feedbackCreateDto == null)
+//     {
+//         throw new ArgumentNullException(nameof(feedbackCreateDto));
+//     }
 
-    var user = await _context.Users.FindAsync(userId);
-    if (user == null)
-    {
-        throw new ArgumentException("Invalid user id");
-    }
+//     var user = await _context.Users.FindAsync(userId);
+//     if (user == null)
+//     {
+//         throw new ArgumentException("Invalid user id");
+//     }
 
-    var department = await _context.Departments.FindAsync(feedbackCreateDto.DepartmentId);
-    if (department == null)
-    {
-        throw new ArgumentException("Invalid department id");
-    }
+//     var department = await _context.Departments.FindAsync(feedbackCreateDto.DepartmentId);
+//     if (department == null)
+//     {
+//         throw new ArgumentException("Invalid department id");
+//     }
 
-    var feedback = _mapper.Map<Feedback>(feedbackCreateDto);
-    feedback.SenderId = userId;
-    feedback.DepartmentId = department.Id;
-    feedback.IsAnonymous = feedbackCreateDto.IsAnonymous;
+//     var feedback = _mapper.Map<Feedback>(feedbackCreateDto);
+//     feedback.SenderId = userId;
+//     feedback.DepartmentId = department.Id;
+//     feedback.IsAnonymous = feedbackCreateDto.IsAnonymous;
     
-    _context.Feedbacks.Add(feedback);
-    await _context.SaveChangesAsync();
+//     _context.Feedbacks.Add(feedback);
+//     await _context.SaveChangesAsync();
 
-  var feedbackDto = _mapper.Map<FeedbackDto>(feedback);
-feedbackDto.SenderName = user.UserName;
-feedbackDto.DepartmentName = user.Department.DepartmentName;
-feedbackDto.IsAnonymous = feedbackCreateDto.IsAnonymous;
+//   var feedbackDto = _mapper.Map<FeedbackDto>(feedback);
+// feedbackDto.SenderName = user.UserName;
+// feedbackDto.DepartmentName = user.Department.DepartmentName;
+// feedbackDto.IsAnonymous = feedbackCreateDto.IsAnonymous;
 
 
-    return feedbackDto;
-}
+//     return feedbackDto;
+// }
 
 
     // public async Task<Feedback> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId)
@@ -116,6 +116,37 @@ feedbackDto.IsAnonymous = feedbackCreateDto.IsAnonymous;
 
     //     return feedback;
     // }
+
+        // public async Task<Feedback> CreateFeedbackAsync(string title, string content, bool isAnonymous, int departmentId, int userId)
+        // {
+        // // int inputStatus = 0;
+        //     var feedback = new Feedback
+        //     {
+            
+        // //FeedbackStatus status = (FeedbackStatus)Enum.Parse(typeof(FeedbackStatus), inputStatus);
+        //         Title = title,
+        //         Content = content,
+        //         IsAnonymous = isAnonymous,
+        //     //  Status = (FeedbackStatus)Enum.Parse(typeof(FeedbackStatus), inputStatus.ToString()),
+        //         DepartmentId = departmentId,
+        //         SenderId = userId
+        //     };
+
+        //     await _context.Feedbacks.AddAsync(feedback);
+        //     await _context.SaveChangesAsync();
+
+        //     return feedback;
+        // }
+
+        public async Task CreateFeedbackAsync(Feedback feedback)
+        {
+            await _context.Feedbacks.AddAsync(feedback);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
 
 
 
@@ -378,6 +409,7 @@ feedbackDto.IsAnonymous = feedbackCreateDto.IsAnonymous;
                 Title = f.Title,
                 Content = f.Content,
                 SenderId = f.SenderId,
+                IsAnonymous = f.IsAnonymous,
                 SenderName = f.Sender != null ? f.Sender.UserName : null,
                // Status = f.Status.ToString(),
                Status = f.Status,

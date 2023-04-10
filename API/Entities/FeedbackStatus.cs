@@ -7,9 +7,10 @@ namespace API.Entities
 {
     public enum FeedbackStatus
     {
-        Open,
-        InProgress,
-        Closed
+        Open = 0,
+        InProgress = 1,
+        Resolved = 2,
+        Closed = 3
     }
 
 
@@ -24,6 +25,8 @@ namespace API.Entities
                 case "open":
                     return FeedbackStatus.Open;
                 case "InProgress":
+                    return FeedbackStatus.InProgress;
+                case "Resolved":
                     return FeedbackStatus.InProgress;
                 case "closed":
                     return FeedbackStatus.Closed;

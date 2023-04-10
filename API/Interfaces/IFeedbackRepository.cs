@@ -13,8 +13,11 @@ namespace API.Interfaces
         Task<FeedbackDto> GetFeedbackByIdAsync(int feedbackId);
         Task<IEnumerable<FeedbackDto>> GetFeedbacksByDepartmentIdAsync(int departmentId);
       //  Task<FeedbackDto> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto);
-        Task<FeedbackDto> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId);
+        // Task<FeedbackDto> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId);
         // Task<Feedback> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId);
+     //  Task<Feedback> CreateFeedbackAsync(string title, string content, bool isAnonymous, int departmentId, int userId);
+       Task CreateFeedbackAsync(Feedback feedback);
+        Task SaveChangesAsync(); 
 
         Task UpdateFeedbackAsync(int feedbackId, FeedbackUpdateDto feedbackUpdateDto);
         Task DeleteFeedbackAsync(int feedbackId);

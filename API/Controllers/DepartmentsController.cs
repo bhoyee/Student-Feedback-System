@@ -173,28 +173,11 @@ namespace API.Controllers
 [HttpGet("{departmentId}/feedbacks")]
 public async Task<IActionResult> GetFeedbacksByDepartment(int departmentId)
 {
-    // var feedbackDtos = await _feedbackRepository.GetAllFeedbacksByDepartmentIdAsync(departmentId);
+    var feedbackDtos = await _feedbackRepository.GetAllFeedbacksByDepartmentIdAsync(departmentId);
 
-    // var json = SerializeFeedbackDtosToJson(feedbackDtos);
-
-    // return new JsonResult(json);
-      var feedbackDtos = await _feedbackRepository.GetAllFeedbacksByDepartmentIdAsync(departmentId);
-    var json = JsonSerializer.Serialize(feedbackDtos, new JsonSerializerOptions { 
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        IgnoreNullValues = true,
-        WriteIndented = true
-    });
-    return Ok(json);
+    return Ok(feedbackDtos);
 }
 
-public string SerializeFeedbackDtosToJson(IEnumerable<FeedbackDto> feedbackDtos)
-{
-    var options = new JsonSerializerOptions();
-    options.Converters.Add(new FeedbackStatusConverter());
-    var json = JsonSerializer.Serialize(feedbackDtos, options);
-
-    return json;
-}
 
 // Assuming you have a FeedbackRepository class with a GetFeedbackByIdAsync method
 [HttpGet("{deptID}/feedbacks/{feedbackId}")]
@@ -235,7 +218,17 @@ public async Task<ActionResult<FeedbackDto>> GetFeedback(int deptID, int feedbac
     }
 
     var feedbackToReturn = _mapper.Map<FeedbackDto>(feedback);
-    //feedbackToReturn.Deparmtent = _mapper.Map<DepartmentDto>(department);
+
+    if (feedback.IsAnonymous)
+    {
+        feedbackToReturn.SenderName = "Anonymous";
+    }
+    else
+    {
+        var sender = await _userRepository.GetUserByIdAsync(feedback.SenderId);
+      //  feedbackToReturn.SenderName = sender.FirstName + " " + sender.LastName;
+        feedbackToReturn.SenderName = sender.UserName;
+    }
 
     return Ok(feedbackToReturn);
 }

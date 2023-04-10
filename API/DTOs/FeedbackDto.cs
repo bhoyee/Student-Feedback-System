@@ -8,27 +8,14 @@ namespace API.DTOs
 {
     public class FeedbackDto
     {
-      int _status = 0;
-      public int Id { get; set; }
-    public string Title { get; set; }
+    
+    public int Id { get; set; }
+     public string Title { get; set; }
      public string Content { get; set; }
      public int SenderId { get; set; }
-    public string SenderName { get; set; }
-    public FeedbackStatus Status { get; set; } // modified type to FeedbackStatus
-    public bool IsAnonymous { get; set; }
-
-
-    // public string Status
-    //     {
-    //         get { return _status.ToString(); }
-    //         set
-    //         {
-    //             if (!Enum.TryParse(value, true, out _status))
-    //             {
-    //                 // handle invalid status string
-    //             }
-    //         }
-    // }
+     public string SenderName { get; set; }
+     public FeedbackStatus Status { get; set; } =0; // modified type to FeedbackStatus
+     public bool IsAnonymous { get; set; }
 
     public int OpenFeedbackCount { get; set; } // New property to hold the count of feedbacks with an open status for that department
 
