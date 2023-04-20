@@ -18,5 +18,16 @@ namespace API.Extensions
         {
             return int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value);
         }
+
+        // public static int GetUserDepartmentId(this ClaimsPrincipal user)
+        // {
+        //     var departmentIdClaim = user.FindFirst("DepartmentId");
+        //     if (departmentIdClaim == null)
+        //     {
+        //         return -1; // or any other default value that makes sense for your application
+        //     }
+
+        //     return int.Parse(departmentIdClaim.Value);
+        // }
     }
 }

@@ -30,6 +30,9 @@ namespace API.Data
 
         public DbSet<Feedback> Feedbacks {get; set;}
         public DbSet<FeedbackReply> FeedbackReplies {get; set;}
+
+        public DbSet<FeedbackRecipient> FeedbackRecipients { get; set; }
+
         
         protected override void OnModelCreating(ModelBuilder builder)
         {

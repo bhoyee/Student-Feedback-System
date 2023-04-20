@@ -19,6 +19,8 @@ namespace API.Interfaces
         Task<IEnumerable<Department>> Search (string deptName);
         Task<Department> AddDepartment(Department department);
         Task DeleteDepartment(int id);
+        Task<int> CreateFeedbackAsync(FeedbackDto feedbackDto);
+
 
     }
 }

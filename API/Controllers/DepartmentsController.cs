@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using API.Data;
 using API.DTOs;
 using API.Entities;
+using API.Extensions;
 using API.Interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -170,68 +173,54 @@ namespace API.Controllers
                 return Ok(feedbacks);
          
         }
-[HttpGet("{departmentId}/feedbacks")]
-public async Task<IActionResult> GetFeedbacksByDepartment(int departmentId)
-{
-    var feedbackDtos = await _feedbackRepository.GetAllFeedbacksByDepartmentIdAsync(departmentId);
-
-    return Ok(feedbackDtos);
-}
 
 
-// Assuming you have a FeedbackRepository class with a GetFeedbackByIdAsync method
-[HttpGet("{deptID}/feedbacks/{feedbackId}")]
-// public async Task<IActionResult> GetFeedback(int deptID, int feedbackId)
-// {
-//     var feedback = await _feedbackRepository.GetFeedbackByIdAsync(feedbackId);
+        [HttpGet("{departmentId}/feedbacks")]
+        public async Task<IActionResult> GetFeedbacksByDepartment(int departmentId)
+        {
+            var feedbackDtos = await _feedbackRepository.GetAllFeedbacksByDepartmentIdAsync(departmentId);
 
-//     if (feedback == null)
-//     {
-//         return NotFound($"Feedback with ID {feedbackId} not found");
-//     }
+            return Ok(feedbackDtos);
+        }
 
-//     if (feedback.DepartmentId != deptID)
-//     {
-//         return BadRequest("Feedback does not belong to the specified department");
-//     }
 
-//     var feedbackDto = _mapper.Map<FeedbackDto>(feedback);
-//     return Ok(feedbackDto);
-// }
-public async Task<ActionResult<FeedbackDto>> GetFeedback(int deptID, int feedbackId)
-{
-    var feedback = await _feedbackRepository.GetFeedbackByIdAsync(feedbackId);
-    if (feedback == null)
-    {
-        return NotFound($"Feedback with ID {feedbackId} not found");
-    }
-   if (feedback.DepartmentId != deptID)
-    {
-        return BadRequest($"Feedback with ID {feedbackId} does not belong to department with ID {deptID}");
-    }
+        // Assuming you have a FeedbackRepository class with a GetFeedbackByIdAsync method
+        [HttpGet("{deptID}/feedbacks/{feedbackId}")]
 
-    var department = await _DepartmentRepo.GetDepartmentByIdAsync(deptID);
+        public async Task<ActionResult<FeedbackDto>> GetFeedback(int deptID, int feedbackId)
+        {
+            var feedback = await _feedbackRepository.GetFeedbackByIdAsync(feedbackId);
+            if (feedback == null)
+            {
+                return NotFound($"Feedback with ID {feedbackId} not found");
+            }
+        if (feedback.DepartmentId != deptID)
+            {
+                return BadRequest($"Feedback with ID {feedbackId} does not belong to department with ID {deptID}");
+            }
 
-    if (department == null)
-    {
-        return NotFound();
-    }
+            var department = await _DepartmentRepo.GetDepartmentByIdAsync(deptID);
 
-    var feedbackToReturn = _mapper.Map<FeedbackDto>(feedback);
+            if (department == null)
+            {
+                return NotFound();
+            }
 
-    if (feedback.IsAnonymous)
-    {
-        feedbackToReturn.SenderName = "Anonymous";
-    }
-    else
-    {
-        var sender = await _userRepository.GetUserByIdAsync(feedback.SenderId);
-      //  feedbackToReturn.SenderName = sender.FirstName + " " + sender.LastName;
-        feedbackToReturn.SenderName = sender.UserName;
-    }
+            var feedbackToReturn = _mapper.Map<FeedbackDto>(feedback);
 
-    return Ok(feedbackToReturn);
-}
+            if (feedback.IsAnonymous)
+            {
+                feedbackToReturn.SenderName = "Anonymous";
+            }
+            else
+            {
+                var sender = await _userRepository.GetUserByIdAsync(feedback.SenderId);
+            //  feedbackToReturn.SenderName = sender.FirstName + " " + sender.LastName;
+                feedbackToReturn.SenderName = sender.UserName;
+            }
+
+            return Ok(feedbackToReturn);
+        }
 
 
 
@@ -294,6 +283,49 @@ public async Task<ActionResult<FeedbackDto>> GetFeedback(int deptID, int feedbac
            }
 
         }
+
+        [HttpPost("feedback/create")]
+        [Authorize(Roles = "Dept_Head, Moderator")]
+        public async Task<IActionResult> CreateFeedback(FeedbackDto feedbackDto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var user = await _userManager.FindByIdAsync(userId);
+
+            // Check if user has the necessary role
+            if (!await _userManager.IsInRoleAsync(user, "dept_head") && !await _userManager.IsInRoleAsync(user, "moderator"))
+            {
+                return Unauthorized();
+            }
+
+            // Check if feedback is targeted to the user's department
+            if (feedbackDto.TargetAudience == FeedbackTargetAudience.Department.ToString() && feedbackDto.DepartmentId != user.DepartmentId)
+            {
+                return BadRequest(new { message = "Feedback target audience is invalid" });
+            }
+
+            // Check if feedback is targeted to all students and user is not a moderator
+            if (feedbackDto.TargetAudience == FeedbackTargetAudience.AllStudents.ToString() && !await _userManager.IsInRoleAsync(user, "moderator"))
+            {
+                return Unauthorized();
+            }
+
+            feedbackDto.SenderId = user.Id;
+            feedbackDto.DepartmentId = user.DepartmentId;
+
+            var result = await _DepartmentRepo.CreateFeedbackAsync(feedbackDto);
+
+            if (result > 0)
+            {
+                return Ok(new { message = "Feedback created successfully" });
+            }
+            else
+            {
+                return BadRequest(new { message = "Error creating feedback" });
+            }
+        }
+
+
+
                
     }
 

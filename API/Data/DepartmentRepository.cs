@@ -6,8 +6,11 @@ using API.DTOs;
 using API.Entities;
 using API.Interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using static API.Controllers.FeedbacksController;
+using Microsoft.Extensions.DependencyInjection;
+
 
 namespace API.Data
 {
@@ -16,9 +19,15 @@ namespace API.Data
         private readonly DataContext _context;
          private readonly IMapper _mapper;
       
+        public readonly UserManager<AppUser> _userManager;
+        public readonly IServiceProvider _serviceProvider;
+        public readonly RoleManager<IdentityRole> _roleManager;
 
-    public DepartmentRepository(DataContext context, IMapper mapper)
+    public DepartmentRepository(DataContext context, IMapper mapper, RoleManager<IdentityRole> roleManager, UserManager<AppUser> userManager, IServiceProvider serviceProvider)
     {
+            _roleManager = roleManager;
+            _serviceProvider = serviceProvider;
+            _userManager = userManager;
       
         _context = context;
         _mapper = mapper;
@@ -88,6 +97,57 @@ namespace API.Data
         {
             throw new NotImplementedException();
         }
+
+        
+        public async Task<int> CreateFeedbackAsync(FeedbackDto feedbackDto)
+        {
+            var feedback = new Feedback
+            {
+                Title = feedbackDto.Title,
+                Content = feedbackDto.Content,
+                SenderId = feedbackDto.SenderId,
+                IsAnonymous = feedbackDto.IsAnonymous,
+                DepartmentId = feedbackDto.DepartmentId,
+                DateCreated = DateTime.Now,
+            };
+
+            // Get the list of feedback recipients based on the selected target audience
+            List<FeedbackRecipient> recipients = new List<FeedbackRecipient>();
+            //var roleManager = _serviceProvider.GetService<RoleManager<IdentityRole>>();
+
+            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            if (feedbackDto.TargetAudience == FeedbackTargetAudience.Department.ToString())
+            {
+                var studentsInDepartment = await _userManager.GetUsersInRoleAsync("Student");
+                foreach (var student in studentsInDepartment)
+                {
+                    if (student.DepartmentId == feedbackDto.DepartmentId)
+                    {
+                        recipients.Add(new FeedbackRecipient { RecipientId = student.Id, IsRead = false });
+                    }
+                }
+            }
+            else if (feedbackDto.TargetAudience == FeedbackTargetAudience.AllStudents.ToString())
+            {
+                var students = await _userManager.GetUsersInRoleAsync("Student");
+                foreach (var student in students)
+                {
+                    recipients.Add(new FeedbackRecipient { RecipientId = student.Id, IsRead = false });
+                }
+            }
+
+            feedback.Recipients = recipients;
+
+            _context.Feedbacks.Add(feedback);
+
+            await _context.SaveChangesAsync();
+
+            return feedback.Id;
+        }
+
+
+
+        
     }
 
 }
