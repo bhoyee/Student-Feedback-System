@@ -24,11 +24,7 @@ namespace API.Helpers
 
             CreateMap<AppUser, FeedbackDto>()
             .ForMember(dest => dest.SenderName, opt => opt.MapFrom(src => src.UserName));
-
-
-
-
-
+            CreateMap<FeedbackReply, FeedbackReplyDto>().ReverseMap();
 
             CreateMap<Department, DepartmentNameDto>();
 

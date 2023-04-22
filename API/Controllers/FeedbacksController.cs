@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace API.Controllers
 {
@@ -27,8 +28,10 @@ namespace API.Controllers
         private readonly IDeparmtentRepo _deparmtentRepo;
         private readonly IServiceProvider _serviceProvider;
         public readonly IEmailService _emailService;
-        public FeedbacksController(DataContext context, UserManager<AppUser> userManager, IEmailService emailService, IMapper mapper, IServiceProvider serviceProvider,  IFeedbackRepository feedbackRepository, IFeedbackReplyRepository feedbackReplyRepository, IDeparmtentRepo deparmtentRepo)
+        private readonly ILogger<FeedbacksController> _logger;
+        public FeedbacksController(DataContext context, ILogger<FeedbacksController> logger, UserManager<AppUser> userManager, IEmailService emailService, IMapper mapper, IServiceProvider serviceProvider,  IFeedbackRepository feedbackRepository, IFeedbackReplyRepository feedbackReplyRepository, IDeparmtentRepo deparmtentRepo)
         {       
+            _logger = logger;
             _emailService = emailService;
             _serviceProvider = serviceProvider;
             _deparmtentRepo = deparmtentRepo;
@@ -57,31 +60,42 @@ namespace API.Controllers
 
         //     return Ok(feedbackDtos);
         // }
+[HttpGet("user/{userId}")]
+public async Task<IActionResult> GetUserFeedbacks(int userId)
+{
+    var feedbacks = await _context.Feedbacks
+        .Include(f => f.Sender)
+        .Include(f => f.Department)
+        .Include(f => f.AssignedTo)
+        .Include(f => f.Replies) // include feedback replies
+        .Where(f => f.SenderId == userId)
+        .OrderByDescending(f => f.DateCreated)
+        .ToListAsync();
 
-        [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetUserFeedbacks(int userId)
+    var feedbackDtos = feedbacks.Select(f => new FeedbackDto
+    {
+        Id = f.Id,
+        Title = f.Title,
+        Content = f.Content,
+        SenderName = f.Sender != null ? f.Sender.UserName : null,
+        DepartmentName = f.Department != null ? f.Department.DepartmentName : null,
+        AssignedToName = f.AssignedTo != null ? f.AssignedTo.UserName : null,
+        DateCreated = f.DateCreated,
+        FeedbackReplies = f.Replies.Select(fr => new FeedbackReplyDto
         {
-            var feedbacks = await _context.Feedbacks
-                                .Include(f => f.Sender)
-                                .Include(f => f.Department)
-                                .Include(f => f.AssignedTo)
-                                .Where(f => f.SenderId == userId)
-                                .ToListAsync();
+            Id = fr.Id,
+            FeedbackId = fr.FeedbackId,
+            Content = fr.Content,
+            IsPublic = fr.IsPublic,
+            UserId = fr.UserId,
+           // SenderName = fr.Sender != null ? fr.Sender.UserName : null,
+            UpdatedAt = fr.UpdatedAt
+        }).ToList()
+    });
 
-            var feedbackDtos = feedbacks.Select(f => new FeedbackDto
-            {
-                Id = f.Id,
-                Title = f.Title,
-                Content = f.Content,
-                SenderName = f.Sender != null ? f.Sender.UserName : null,
-                DepartmentName = f.Department != null ? f.Department.DepartmentName : null,
-               // Status = f.Status,
-                AssignedToName = f.AssignedTo != null ? f.AssignedTo.UserName : null,
-                DateCreated = f.DateCreated
-            });
+    return Ok(feedbackDtos);
+}
 
-            return Ok(feedbackDtos);
-        }
 
 
         [HttpGet("{feedbackId}")]
@@ -282,6 +296,48 @@ public async Task<IActionResult> CreateFeedback([FromBody] FeedbackDto feedbackD
             var feedbackReplyDto = await _feedbackReplyRepository.CreateFeedbackReplyAsync(feedbackId, feedbackReplyCreateDto);
             return CreatedAtAction(nameof(GetFeedbackReply), new { departmentId, feedbackId, feedbackReplyId = feedbackReplyDto.Id }, feedbackReplyDto);
         }
+        //staff reply to feedback -- need to move to department
+[HttpPost("{feedbackId}/reply")]
+public async Task<ActionResult<string>> AddReply(int feedbackId, FeedbackReplyDto feedbackReplyDto)
+{
+    var feedback = await _context.Feedbacks
+        .Include(f => f.Replies)
+        .FirstOrDefaultAsync(f => f.Id == feedbackId);
+
+    if (feedback == null)
+    {
+        _logger.LogInformation($"Feedback with ID {feedbackId} not found.");
+        return NotFound();
+    }
+
+    var feedbackReply = new FeedbackReply
+    {
+        Content = feedbackReplyDto.Content,
+         IsPublic = feedbackReplyDto.IsPublic,
+         CreatedAt = DateTime.UtcNow,
+        UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier))
+    };
+
+    feedback.Replies.Add(feedbackReply);
+
+    try
+    {
+        await _context.SaveChangesAsync();
+        _logger.LogInformation($"Feedback reply added successfully to feedback with ID {feedbackId}.");
+        return Ok("Reply added successfully");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError($"An error occurred while saving the feedback reply: {ex}");
+        return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while saving the feedback reply");
+    }
+}
+
+
+
+
+
+
 
         private async Task<FeedbackReplyDto> GetFeedbackReply(int feedbackReplyId)
         {

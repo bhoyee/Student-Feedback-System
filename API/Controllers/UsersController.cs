@@ -167,6 +167,7 @@ namespace API.Controllers
             return BadRequest("Failed to delete photo");
         }
 
+        // get feedback from department
         [HttpGet("feedback")]
         [Authorize(Roles = "Student")]
         public async Task<IActionResult> GetFeedbackForStudent()
