@@ -428,30 +428,32 @@ namespace API.Data
             return feedbackDtos;
         }
 
-   public async Task<IEnumerable<FeedbackDto>> GetFeedbackForStudentAsync(string studentId)
-{
-    var student = await _userManager.FindByIdAsync(studentId);
-    var departmentId = student.DepartmentId;
+    public async Task<IEnumerable<FeedbackDto>> GetFeedbackForStudentAsync(string studentId)
+    {
+        var student = await _userManager.FindByIdAsync(studentId);
+        var departmentId = student.DepartmentId;
 
-    var feedback = await _context.Feedbacks
-        .Where(f =>
-            (f.TargetAudience == FeedbackTargetAudience.Department && f.DepartmentId == departmentId) ||
-            f.TargetAudience == FeedbackTargetAudience.AllStudents ||
-            f.Recipients.Any(r => r.RecipientId == int.Parse(studentId)))
-        .Select(f => new FeedbackDto
-        {
-            Id = f.Id,
-            Title = f.Title,
-            Content = f.Content,
-            SenderName = $"{f.Sender.UserName}",
-            DateCreated = f.DateCreated,
-            //IsRead = f.Recipients.Any(r => r.RecipientId == studentId && r.IsRead)
-        })
-        .ToListAsync();
+        var feedback = await _context.Feedbacks
+            .Where(f =>
+                (f.TargetAudience == FeedbackTargetAudience.Department && f.DepartmentId == departmentId) ||
+                f.TargetAudience == FeedbackTargetAudience.AllStudents ||
+                f.Recipients.Any(r => r.RecipientId == int.Parse(studentId)))
+            .Where(f => f.SenderId != int.Parse(studentId)) // Exclude feedback created by the student
+            .OrderByDescending(f => f.DateCreated) // Order by latest feedback first
+            .Select(f => new FeedbackDto
+            {
+                Id = f.Id,
+                Title = f.Title,
+                Content = f.Content,
+                SenderName = $"{f.Sender.UserName}",
+                DateCreated = f.DateCreated,
+                //IsRead = f.Recipients.Any(r => r.RecipientId == studentId && r.IsRead)
+            })
+            .ToListAsync();
 
-    return feedback;
-}
- 
+        return feedback;
+    }
+
 
 
 

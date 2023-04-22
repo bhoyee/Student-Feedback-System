@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.Extensions.DependencyInjection;
 
 namespace API.Controllers
 {
@@ -25,8 +25,12 @@ namespace API.Controllers
         public readonly UserManager<AppUser> _userManager;
         public readonly DataContext _context;
         private readonly IDeparmtentRepo _deparmtentRepo;
-        public FeedbacksController(DataContext context, UserManager<AppUser> userManager, IMapper mapper, IFeedbackRepository feedbackRepository, IFeedbackReplyRepository feedbackReplyRepository, IDeparmtentRepo deparmtentRepo)
+        private readonly IServiceProvider _serviceProvider;
+        public readonly IEmailService _emailService;
+        public FeedbacksController(DataContext context, UserManager<AppUser> userManager, IEmailService emailService, IMapper mapper, IServiceProvider serviceProvider,  IFeedbackRepository feedbackRepository, IFeedbackReplyRepository feedbackReplyRepository, IDeparmtentRepo deparmtentRepo)
         {       
+            _emailService = emailService;
+            _serviceProvider = serviceProvider;
             _deparmtentRepo = deparmtentRepo;
             _context = context;
             
@@ -119,27 +123,104 @@ namespace API.Controllers
     //             return StatusCode(500, new { message = ex.Message });
     //         }
     //     }
+// [HttpPost]
+// public async Task<ActionResult<FeedbackDto>> CreateFeedback(Feedback feedback)
+// {
+//     var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+//     var department = await _deparmtentRepo.GetDepartmentByIdAsync(feedback.DepartmentId);
+//     if (department == null)
+//         return BadRequest("Invalid department id");
+
+//     feedback.SenderId = userId;
+//     feedback.Status = FeedbackStatus.Open;
+//     feedback.DateCreated = DateTime.Now;
+
+//     await _feedbackRepository.CreateFeedbackAsync(feedback);
+//     await _feedbackRepository.SaveChangesAsync();
+
+//     var feedbackDto = _mapper.Map<FeedbackDto>(feedback);
+//     return Ok("Inserted successfully");
+
+//    // return CreatedAtAction(nameof(GetFeedbackById), new { id = feedbackDto.Id }, feedbackDto);
+// }
+
 [HttpPost]
-public async Task<ActionResult<FeedbackDto>> CreateFeedback(Feedback feedback)
+public async Task<IActionResult> CreateFeedback([FromBody] FeedbackDto feedbackDto)
 {
-    var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+    if (!ModelState.IsValid)
+    {
+        return BadRequest(ModelState);
+    }
 
-    var department = await _deparmtentRepo.GetDepartmentByIdAsync(feedback.DepartmentId);
-    if (department == null)
-        return BadRequest("Invalid department id");
+    // Check if the sender is a student
+    var senderId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var student = await _userManager.FindByIdAsync(senderId);
+    if (student == null || !await _userManager.IsInRoleAsync(student, "Student"))
+    {
+        return BadRequest("Invalid sender id or sender is not a student");
+    }
 
-    feedback.SenderId = userId;
-    feedback.Status = FeedbackStatus.Open;
-    feedback.DateCreated = DateTime.Now;
+    // // Check if the student belongs to the specified department
+    // if (student.DepartmentId != feedbackDto.DepartmentId)
+    // {
+    //     return BadRequest("Student does not belong to the specified department");
+    // }
+
+    var feedback = new Feedback
+    {
+        Title = feedbackDto.Title,
+        Content = feedbackDto.Content,
+        SenderId = student.Id,
+        IsAnonymous = feedbackDto.IsAnonymous,
+        DepartmentId = feedbackDto.DepartmentId,
+        DateCreated = DateTime.Now,
+    };
+
+    // Get the list of feedback recipients based on the selected target audience
+    var recipients = new List<FeedbackRecipient>();
+
+    if (feedbackDto.TargetAudience == FeedbackTargetAudience.Department.ToString())
+    {
+        // Get staffs with roles of 'Moderator' and 'Dept-Head' in the department
+        var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var users = await _userManager.GetUsersInRoleAsync("Moderator");
+        users = users.Concat(await _userManager.GetUsersInRoleAsync("Dept-Head")).Distinct().ToList();
+        
+        var moderators = new List<AppUser>();
+        var deptHeads = new List<AppUser>();
+
+        foreach (var user in users)
+        {
+            if (await _userManager.IsInRoleAsync(user, "Moderator"))
+            {
+                moderators.Add(user);
+            }
+            else if (await _userManager.IsInRoleAsync(user, "Dept-Head") && user.DepartmentId == feedbackDto.DepartmentId)
+            {
+                deptHeads.Add(user);
+            }
+        }
+
+        var recipientUsers = moderators.Concat(deptHeads).ToList();
+
+        foreach (var recipientUser in recipientUsers)
+        {
+            recipients.Add(new FeedbackRecipient { RecipientId = recipientUser.Id, IsRead = false });
+
+            // Send email notification to staff
+            await _emailService.SendFeedbackNotificationEmailAsync(recipientUser.Email, feedbackDto.Title, feedback.Id);
+        }
+    }
+
+    feedback.Recipients = recipients;
 
     await _feedbackRepository.CreateFeedbackAsync(feedback);
     await _feedbackRepository.SaveChangesAsync();
 
-    var feedbackDto = _mapper.Map<FeedbackDto>(feedback);
     return Ok("Inserted successfully");
-
-   // return CreatedAtAction(nameof(GetFeedbackById), new { id = feedbackDto.Id }, feedbackDto);
 }
+
 
 
       
