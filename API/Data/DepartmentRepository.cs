@@ -12,6 +12,7 @@ using static API.Controllers.FeedbacksController;
 using Microsoft.Extensions.DependencyInjection;
 
 
+
 namespace API.Data
 {
     public class DepartmentRepository : IDeparmtentRepo
@@ -22,9 +23,11 @@ namespace API.Data
         public readonly UserManager<AppUser> _userManager;
         public readonly IServiceProvider _serviceProvider;
         public readonly RoleManager<IdentityRole> _roleManager;
+        public readonly IEmailService _emailService;
 
-    public DepartmentRepository(DataContext context, IMapper mapper, RoleManager<IdentityRole> roleManager, UserManager<AppUser> userManager, IServiceProvider serviceProvider)
+    public DepartmentRepository(DataContext context, IMapper mapper, RoleManager<IdentityRole> roleManager, UserManager<AppUser> userManager, IServiceProvider serviceProvider, IEmailService emailService)
     {
+            _emailService = emailService;
             _roleManager = roleManager;
             _serviceProvider = serviceProvider;
             _userManager = userManager;
@@ -113,7 +116,6 @@ namespace API.Data
 
             // Get the list of feedback recipients based on the selected target audience
             List<FeedbackRecipient> recipients = new List<FeedbackRecipient>();
-            //var roleManager = _serviceProvider.GetService<RoleManager<IdentityRole>>();
 
             var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             if (feedbackDto.TargetAudience == FeedbackTargetAudience.Department.ToString())
@@ -141,6 +143,15 @@ namespace API.Data
             _context.Feedbacks.Add(feedback);
 
             await _context.SaveChangesAsync();
+
+            foreach (var recipient in feedback.Recipients)
+            {
+                var student = await _userManager.FindByIdAsync(recipient.RecipientId.ToString());
+                if (student != null)
+                {
+                    await _emailService.SendFeedbackNotificationEmailAsync(student.Email, feedbackDto.Title, feedback.Id);
+                }
+            }
 
             return feedback.Id;
         }

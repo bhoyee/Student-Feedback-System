@@ -12,32 +12,51 @@ using API.Helpers;
 
 namespace API.Services
 {
-   public class EmailService : IEmailService
-{
-    private readonly SmtpSettings _smtpSettings;
-
-    public EmailService(IOptions<SmtpSettings> smtpSettings)
+    public class EmailService : IEmailService
     {
-        _smtpSettings = smtpSettings.Value;
-    }
+        private readonly SmtpSettings _smtpSettings;
 
-    public async Task SendEmailAsync(string email, string subject, string message)
-    {
-        var emailMessage = new MimeMessage();
-
-        emailMessage.From.Add(new MailboxAddress("Student Feedback", "s.feedback@outlook.com"));
-        emailMessage.To.Add(new MailboxAddress("", email));
-        emailMessage.Subject = subject;
-        emailMessage.Body = new TextPart("html") { Text = message };
-
-        using (var client = new MailKit.Net.Smtp.SmtpClient())
+        public EmailService(IOptions<SmtpSettings> smtpSettings)
         {
+            _smtpSettings = smtpSettings.Value;
+        }
+
+        public async Task SendEmailAsync(string email, string subject, string message)
+        {
+            var emailMessage = new MimeMessage();
+
+            emailMessage.From.Add(new MailboxAddress("Student Feedback", "s.feedback@outlook.com"));
+            emailMessage.To.Add(new MailboxAddress("", email));
+            emailMessage.Subject = subject;
+            emailMessage.Body = new TextPart("html") { Text = message };
+
+            using (var client = new MailKit.Net.Smtp.SmtpClient())
+            {
+                await client.ConnectAsync("smtp.office365.com", 587, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync("s.feedback@outlook.com", "Rain1234#");
+                await client.SendAsync(emailMessage);
+                await client.DisconnectAsync(true);
+            }
+        }
+        public async Task SendFeedbackNotificationEmailAsync(string email, string feedbackTitle, int feedbackId)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Student Feedback", "s.feedback@outlook.com"));
+            message.To.Add(new MailboxAddress("",email));
+            message.Subject = "New Feedback Available";
+
+            var bodyBuilder = new BodyBuilder();
+            bodyBuilder.HtmlBody = $"<p>Dear student,</p><p>A new feedback with title '{feedbackTitle}' is available for you to view. Click <a href='https://localhost:5001/api/feedbacks/{feedbackId}'>here</a> to view the feedback.</p>";
+            bodyBuilder.TextBody = $"Dear student, a new feedback with title '{feedbackTitle}' is available for you to view. Click here: https://localhost:5001/api/feedbacks/{feedbackId}";
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new MailKit.Net.Smtp.SmtpClient();
             await client.ConnectAsync("smtp.office365.com", 587, SecureSocketOptions.StartTls);
             await client.AuthenticateAsync("s.feedback@outlook.com", "Rain1234#");
-            await client.SendAsync(emailMessage);
+            await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
     }
-}
 
 }

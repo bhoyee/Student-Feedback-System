@@ -9,5 +9,8 @@ namespace API.Interfaces
     public interface IEmailService
     {
         Task SendEmailAsync(string email, string subject, string message);
+        Task SendFeedbackNotificationEmailAsync(string email, string feedbackTitle, int feedbackId);
+
+
     }
 }

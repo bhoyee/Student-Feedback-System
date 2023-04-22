@@ -13,7 +13,7 @@ namespace API.Entities
         public int SenderId { get; set; }
         public AppUser Sender { get; set; }
         public bool IsAnonymous { get; set; } // Add this field to indicate whether the sender is anonymous or not
-
+        public FeedbackTargetAudience TargetAudience { get; set; } // Add this field to indicate the target audience of the feedback
         public int? AssignedToId { get; set; }
         public AppUser AssignedTo { get; set; }
         public FeedbackStatus Status { get; set; } = 0;

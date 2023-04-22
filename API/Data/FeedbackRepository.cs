@@ -7,6 +7,7 @@ using API.DTOs;
 using API.Entities;
 using API.Interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Data
@@ -15,8 +16,10 @@ namespace API.Data
     {
         public readonly DataContext _context;
         private readonly IMapper _mapper;
-    public FeedbackRepository(DataContext context, IMapper mapper)
+        private readonly UserManager<AppUser> _userManager;
+    public FeedbackRepository(DataContext context, IMapper mapper, UserManager<AppUser> userManager)
     {
+             _userManager = userManager;
             _mapper = mapper;
             _context = context;
     }
@@ -425,7 +428,30 @@ namespace API.Data
             return feedbackDtos;
         }
 
-       
+   public async Task<IEnumerable<FeedbackDto>> GetFeedbackForStudentAsync(string studentId)
+{
+    var student = await _userManager.FindByIdAsync(studentId);
+    var departmentId = student.DepartmentId;
+
+    var feedback = await _context.Feedbacks
+        .Where(f =>
+            (f.TargetAudience == FeedbackTargetAudience.Department && f.DepartmentId == departmentId) ||
+            f.TargetAudience == FeedbackTargetAudience.AllStudents ||
+            f.Recipients.Any(r => r.RecipientId == int.Parse(studentId)))
+        .Select(f => new FeedbackDto
+        {
+            Id = f.Id,
+            Title = f.Title,
+            Content = f.Content,
+            SenderName = $"{f.Sender.UserName}",
+            DateCreated = f.DateCreated,
+            //IsRead = f.Recipients.Any(r => r.RecipientId == studentId && r.IsRead)
+        })
+        .ToListAsync();
+
+    return feedback;
+}
+ 
 
 
 

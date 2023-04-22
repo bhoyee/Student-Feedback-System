@@ -16,7 +16,7 @@ namespace API.Interfaces
         // Task<FeedbackDto> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId);
         // Task<Feedback> CreateFeedbackAsync(FeedbackCreateDto feedbackCreateDto, int userId);
      //  Task<Feedback> CreateFeedbackAsync(string title, string content, bool isAnonymous, int departmentId, int userId);
-       Task CreateFeedbackAsync(Feedback feedback);
+        Task CreateFeedbackAsync(Feedback feedback);
         Task SaveChangesAsync(); 
 
         Task UpdateFeedbackAsync(int feedbackId, FeedbackUpdateDto feedbackUpdateDto);
@@ -26,9 +26,12 @@ namespace API.Interfaces
       //  Task<List<Feedback>> GetFeedbacksByDepartmentIdAndStatusAsync(int departmentId, string status);
         Task<List<FeedbackDto>> GetFeedbacksByDepartmentIdAndStatusAsync(int departmentId, FeedbackStatus status);
 
-         Task<int> GetOpenFeedbackCountByDepartmentAsync(int departmentId);
+        Task<int> GetOpenFeedbackCountByDepartmentAsync(int departmentId);
 
-    Task<List<FeedbackDto>> GetAllFeedbacksByDepartmentIdAsync(int departmentId);
+        Task<List<FeedbackDto>> GetAllFeedbacksByDepartmentIdAsync(int departmentId);
+
+        Task<IEnumerable<FeedbackDto>> GetFeedbackForStudentAsync(string studentId);
+
 
 
 

@@ -23,8 +23,10 @@ namespace API.Controllers
         public readonly IMapper _mapper;
         public readonly IUserRepository _userRepository;
         public readonly IPhotoService _photoService;
-        public UsersController(IUserRepository userRepository, IMapper mapper, IPhotoService photoService)
+        private readonly IFeedbackRepository _feedbackRepository;
+        public UsersController(IUserRepository userRepository, IMapper mapper, IPhotoService photoService, IFeedbackRepository feedbackRepository)
         {
+            _feedbackRepository = feedbackRepository;
             _photoService = photoService;
             _userRepository = userRepository;
             _mapper = mapper;
@@ -164,5 +166,16 @@ namespace API.Controllers
 
             return BadRequest("Failed to delete photo");
         }
+
+        [HttpGet("feedback")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetFeedbackForStudent()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var feedback = await _feedbackRepository.GetFeedbackForStudentAsync(userId);
+
+            return Ok(feedback);
+        }
+
     }
 }
