@@ -17,5 +17,8 @@ namespace API.Entities
         public AppUser User { get; set; }
         public bool IsPublic { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public FeedbackStatus? Status { get; set; }
+
+
     }
 }

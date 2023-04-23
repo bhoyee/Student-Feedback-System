@@ -17,6 +17,9 @@ namespace API.DTOs
         public DateTime DateCreated { get; set; }
         public bool IsPublic { get; set; } = true;
         public DateTime UpdatedAt { get; set; }
+        public int? Status { get; set; }
+
+
 
     }
 }
