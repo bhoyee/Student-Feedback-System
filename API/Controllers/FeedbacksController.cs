@@ -143,52 +143,174 @@ namespace API.Controllers
             return feedbackDto;
         }
 
-// user reply to feedback they created and send from deprtments
-[Authorize]
-[HttpPost("user/{feedbackId}/reply")]
-public async Task<ActionResult<FeedbackReplyDto>> PostFeedbackReply(int feedbackId, FeedbackReplyCreateDto feedbackReplyForCreationDto)
-{
-    var userId = User.GetUserId();
+        // user reply to feedback they created and send from deprtments
+        [Authorize]
+        [HttpPost("user/{feedbackId}/reply")]
+        public async Task<ActionResult<FeedbackReplyDto>> PostFeedbackReply(int feedbackId, FeedbackReplyCreateDto feedbackReplyForCreationDto)
+        {
+            var userId = User.GetUserId();
 
-    // Check if the feedback belongs to the user or was received by the user
-    var feedback = await _context.Feedbacks
-        .Include(f => f.Replies.OrderByDescending(r => r.ModifiedAt)) // sort replies in descending order by ModifiedAt
-        .FirstOrDefaultAsync(f => f.Id == feedbackId && (f.SenderId == userId || f.RecipientId == userId));
+            // Check if the feedback belongs to the user or was received by the user
+            var feedback = await _context.Feedbacks
+                .Include(f => f.Replies.OrderByDescending(r => r.ModifiedAt)) // sort replies in descending order by ModifiedAt
+                .FirstOrDefaultAsync(f => f.Id == feedbackId && (f.SenderId == userId || f.RecipientId == userId));
 
-    if (feedback == null)
-    {
-        _logger.LogInformation($"Feedback with ID {feedbackId} not found.");
-        return NotFound("No such feedback");
-    }
+            if (feedback == null)
+            {
+                _logger.LogInformation($"Feedback with ID {feedbackId} not found.");
+                return NotFound("No such feedback");
+            }
 
-    // Create the feedback reply
-    var feedbackReply = new FeedbackReply
-    {
-        Content = feedbackReplyForCreationDto.Content,
-        UserId = userId,
-        FeedbackId = feedbackId,
-       // IsPublic = feedbackReplyForCreationDto.,
-        Status = FeedbackStatus.Open,
-        ModifiedAt = DateTime.UtcNow
-    };
+            // Create the feedback reply
+            var feedbackReply = new FeedbackReply
+            {
+                Content = feedbackReplyForCreationDto.Content,
+                UserId = userId,
+                FeedbackId = feedbackId,
+            // IsPublic = feedbackReplyForCreationDto.,
+                Status = FeedbackStatus.Open,
+                ModifiedAt = DateTime.UtcNow
+            };
 
-    _context.FeedbackReplies.Add(feedbackReply);
-    await _context.SaveChangesAsync();
+            _context.FeedbackReplies.Add(feedbackReply);
+            await _context.SaveChangesAsync();
 
-    var feedbackReplyDto = new FeedbackReplyDto
-    {
-        Id = feedbackReply.Id,
-        Content = feedbackReply.Content,
-        ModifiedAt = feedbackReply.ModifiedAt,
-        UserId = feedbackReply.UserId,
-        IsPublic = feedbackReply.IsPublic,
-        Status = (int?)feedbackReply.Status
-    };
+            var feedbackReplyDto = new FeedbackReplyDto
+            {
+                Id = feedbackReply.Id,
+                Content = feedbackReply.Content,
+                ModifiedAt = feedbackReply.ModifiedAt,
+                UserId = feedbackReply.UserId,
+                IsPublic = feedbackReply.IsPublic,
+                Status = (int?)feedbackReply.Status
+            };
 
-    return CreatedAtAction(nameof(GetFeedbackReply), new { feedbackId = feedbackId, feedbackReplyId = feedbackReply.Id }, feedbackReplyDto);
-}
+            return CreatedAtAction(nameof(GetFeedbackReply), new { feedbackId = feedbackId, feedbackReplyId = feedbackReply.Id }, feedbackReplyDto);
+        }
 
+        //assign feedback to another staff in the same department
+        [Authorize(Roles = "Dept-Head, Moderator")]
+        [HttpPost("{feedbackId}/assign")]
+        public async Task<ActionResult> AssignFeedback(int feedbackId, FeedbackAssignmentDto feedbackAssignmentDto)
+        {
+            var feedback = await _context.Feedbacks.FindAsync(feedbackId);
 
+            if (feedback == null)
+            {
+                _logger.LogInformation($"Feedback with ID {feedbackId} not found.");
+                return NotFound();
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            if (user == null)
+            {
+                _logger.LogInformation($"User with ID {userId} not found.");
+                return NotFound();
+            }
+
+            var department = await _context.Departments.FindAsync(user.DepartmentId);
+
+            if (department == null)
+            {
+                _logger.LogInformation($"Department for User with ID {userId} not found.");
+                return NotFound();
+            }
+
+            if (!await _userManager.IsInRoleAsync(user, "Staff") || user.DepartmentId != department.Id)
+            {
+                _logger.LogInformation($"User with ID {userId} is not authorized to assign feedback with ID {feedbackId}.");
+                return Forbid();
+            }
+
+            var recipient = await _userManager.FindByIdAsync(feedbackAssignmentDto.RecipientId.ToString());
+
+            if (recipient == null)
+            {
+                _logger.LogInformation($"Recipient with ID {feedbackAssignmentDto.RecipientId} not found.");
+                return NotFound();
+            }
+
+            if (!await _userManager.IsInRoleAsync(recipient, "Staff") || recipient.DepartmentId != department.Id)
+            {
+                _logger.LogInformation($"Recipient with ID {feedbackAssignmentDto.RecipientId} is not in the same department as the user.");
+                return BadRequest("The recipient is not in the same department as the user.");
+            }
+
+            feedback.RecipientId = recipient.Id;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Feedback with ID {feedbackId} has been assigned to user with ID {recipient.Id}.");
+                return Ok($"Feedback with ID {feedbackId} has been assigned to user with ID {recipient.Id}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while assigning feedback with ID {feedbackId}: {ex}");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while assigning feedback");
+            }
+        }
+
+        // feedback assigned to staff 
+        [HttpGet("assigned")]
+        public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetAssignedFeedbacks()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            if (user == null)
+            {
+                _logger.LogInformation($"User with ID {userId} not found.");
+                return NotFound();
+            }
+
+            if (!await _userManager.IsInRoleAsync(user, "Staff"))
+            {
+                _logger.LogInformation($"User with ID {userId} is not a staff member.");
+                return Forbid();
+            }
+
+            var feedbacks = await _context.Feedbacks
+                .Include(f => f.Sender)
+                .Include(f => f.Department)
+                .Include(f => f.Replies)
+                .Where(f => f.AssignedToId == user.Id)
+                .ToListAsync();
+
+            var feedbackDtos = feedbacks.Select(f => new FeedbackDto
+            {
+                Id = f.Id,
+                Title = f.Title,
+                Content = f.Content,
+                Status = f.Status,
+                IsAnonymous = f.IsAnonymous,
+                //IsPublic = f.IsPublic,
+                
+                DepartmentName = f.Department.DepartmentName,
+                
+                SenderName = (f.IsAnonymous ? null : new UserDto { Username = f.Sender.UserName}).ToString(),
+               // User = f.IsAnonymous ? null : new UserDto { Id = f.User.Id, Name = f.User.UserName },
+                DateCreated = f.DateCreated,
+               
+               // CreatedAt = f.CreatedAt,
+                //UpdatedAt = f.UpdatedAt,
+                AssignedToId = f.AssignedToId,
+                //AssigneeId = f.AssigneeId,
+                FeedbackReplies = f.Replies.Select(r => new FeedbackReplyDto
+                {
+                    Id = r.Id,
+                    Content = r.Content,
+                    IsPublic = r.IsPublic,
+                    //CreatedAt = r.CreatedAt,
+                    UserId = r.UserId,
+                   // UserName = r.User.UserName
+                }).ToList()
+            }).ToList();
+
+            return Ok(feedbackDtos);
+        }
 
 
 
@@ -440,70 +562,156 @@ public async Task<ActionResult<FeedbackReplyDto>> PostFeedbackReply(int feedback
         // }
 
         //staff reply to feedback -- need to move to department
-        [HttpPost("{feedbackId}/reply")]
-        public async Task<ActionResult<string>> AddReply(int feedbackId, FeedbackReplyDto feedbackReplyDto)
-        {
-            var feedback = await _context.Feedbacks
-                .Include(f => f.Replies)
-                .FirstOrDefaultAsync(f => f.Id == feedbackId);
+        // [HttpPost("{feedbackId}/reply")]
+        // public async Task<ActionResult<string>> AddReply(int feedbackId, FeedbackReplyDto feedbackReplyDto)
+        // {
+        //     var feedback = await _context.Feedbacks
+        //         .Include(f => f.Replies)
+        //         .FirstOrDefaultAsync(f => f.Id == feedbackId);
 
-            if (feedback == null)
-            {
-                _logger.LogInformation($"Feedback with ID {feedbackId} not found.");
-                return NotFound();
-            }
+        //     if (feedback == null)
+        //     {
+        //         _logger.LogInformation($"Feedback with ID {feedbackId} not found.");
+        //         return NotFound();
+        //     }
 
-            var department = await _context.Departments
-                .FirstOrDefaultAsync(d => d.Id == feedback.DepartmentId);
+        //     var department = await _context.Departments
+        //         .FirstOrDefaultAsync(d => d.Id == feedback.DepartmentId);
 
-            if (department == null)
-            {
-                _logger.LogInformation($"Department with ID {feedback.DepartmentId} not found.");
-                return NotFound();
-            }
+        //     if (department == null)
+        //     {
+        //         _logger.LogInformation($"Department with ID {feedback.DepartmentId} not found.");
+        //         return NotFound();
+        //     }
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var user = await _userManager.FindByIdAsync(userId.ToString());
+        //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //     var user = await _userManager.FindByIdAsync(userId.ToString());
 
-            if (user == null)
-            {
-                _logger.LogInformation($"User with ID {userId} not found.");
-                return NotFound();
-            }
+        //     if (user == null)
+        //     {
+        //         _logger.LogInformation($"User with ID {userId} not found.");
+        //         return NotFound();
+        //     }
 
-            if (!await _userManager.IsInRoleAsync(await _userManager.FindByIdAsync(userId), "Staff") || user.DepartmentId != department.Id)
-            {
-                _logger.LogInformation($"User with ID {userId} is not authorized to add a reply to feedback with ID {feedbackId}.");
-                return Forbid();
-            }
+        //     if (!await _userManager.IsInRoleAsync(await _userManager.FindByIdAsync(userId), "Staff") || user.DepartmentId != department.Id)
+        //     {
+        //         _logger.LogInformation($"User with ID {userId} is not authorized to add a reply to feedback with ID {feedbackId}.");
+        //         return Forbid();
+        //     }
 
-            var feedbackReply = new FeedbackReply
-            {
-                Content = feedbackReplyDto.Content,
-                IsPublic = feedbackReplyDto.IsPublic,
-                CreatedAt = DateTime.UtcNow,
-                UserId = int.Parse(userId),
-                //NewStatus = feedbackReplyDto.NewStatus ?? feedback.Status 
-                Status = (FeedbackStatus?)feedbackReplyDto.Status ?? feedback.Status
+        //     var feedbackReply = new FeedbackReply
+        //     {
+        //         Content = feedbackReplyDto.Content,
+        //         IsPublic = feedbackReplyDto.IsPublic,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UserId = int.Parse(userId),
+        //         //NewStatus = feedbackReplyDto.NewStatus ?? feedback.Status 
+        //         Status = (FeedbackStatus?)feedbackReplyDto.Status ?? feedback.Status
 
 
-            };
+        //     };
 
            
-            feedback.Replies.Add(feedbackReply);
+        //     feedback.Replies.Add(feedbackReply);
 
-            try
+        //     try
+        //     {
+        //         await _context.SaveChangesAsync();
+        //         foreach (var recipient in feedback.Replies)
+        //         {
+        //             var student = await _userManager.FindByIdAsync(recipient.UserId.ToString());
+        //             if (student != null)
+        //             {
+        //                 await _emailService.SendFeedbackNotificationAfterReplyAsync(student.Email,"testing", feedback.Id);
+        //             }
+        //         }
+        //        // await _emailService.SendFeedbackNotificationAfterReplyAsync();
+        //         _logger.LogInformation($"Feedback reply added successfully to feedback with ID {feedbackId}.");
+        //         return Ok("Reply added successfully");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError($"An error occurred while saving the feedback reply: {ex}");
+        //         return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while saving the feedback reply");
+        //     }
+        // }
+        [HttpPost("{feedbackId}/reply")]
+public async Task<ActionResult<string>> AddReply(int feedbackId, FeedbackReplyDto feedbackReplyDto)
+{
+    var feedback = await _context.Feedbacks
+        .Include(f => f.Replies)
+        .FirstOrDefaultAsync(f => f.Id == feedbackId);
+
+    if (feedback == null)
+    {
+        _logger.LogInformation($"Feedback with ID {feedbackId} not found.");
+        return NotFound();
+    }
+
+    var department = await _context.Departments
+        .FirstOrDefaultAsync(d => d.Id == feedback.DepartmentId);
+
+    if (department == null)
+    {
+        _logger.LogInformation($"Department with ID {feedback.DepartmentId} not found.");
+        return NotFound();
+    }
+
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var user = await _userManager.FindByIdAsync(userId.ToString());
+
+    if (user == null)
+    {
+        _logger.LogInformation($"User with ID {userId} not found.");
+        return NotFound();
+    }
+
+    if (!await _userManager.IsInRoleAsync(await _userManager.FindByIdAsync(userId), "Staff") || user.DepartmentId != department.Id)
+    {
+        _logger.LogInformation($"User with ID {userId} is not authorized to add a reply to feedback with ID {feedbackId}.");
+        return Forbid();
+    }
+
+    var feedbackReply = new FeedbackReply
+    {
+        Content = feedbackReplyDto.Content,
+        IsPublic = feedbackReplyDto.IsPublic,
+        CreatedAt = DateTime.UtcNow,
+        UserId = int.Parse(userId),
+        //         Status = (FeedbackStatus?)feedbackReplyDto.Status ?? feedback.Status
+       // Status = feedbackReplyDto.Status ?? feedback.Status
+        Status = feedbackReplyDto.Status.HasValue ? (FeedbackStatus)feedbackReplyDto.Status : feedback.Status
+
+    };
+
+    feedback.Replies.Add(feedbackReply);
+
+    if (feedbackReply.Status != feedback.Status)
+    {
+        feedback.Status = feedbackReply.Status.Value;
+    }
+
+    try
+    {
+        await _context.SaveChangesAsync();
+        foreach (var recipient in feedback.Replies)
+        {
+            var student = await _userManager.FindByIdAsync(recipient.UserId.ToString());
+            if (student != null)
             {
-                await _context.SaveChangesAsync();
-                _logger.LogInformation($"Feedback reply added successfully to feedback with ID {feedbackId}.");
-                return Ok("Reply added successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"An error occurred while saving the feedback reply: {ex}");
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while saving the feedback reply");
+                await _emailService.SendFeedbackNotificationReplyEmailAsync(student.Email, feedback.Title, feedback.Id);
             }
         }
+        _logger.LogInformation($"Feedback reply added successfully to feedback with ID {feedbackId}.");
+        return Ok("Reply added successfully");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError($"An error occurred while saving the feedback reply: {ex}");
+        return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while saving the feedback reply");
+    }
+}
+
 
 
 
@@ -540,6 +748,42 @@ public async Task<ActionResult<FeedbackReplyDto>> PostFeedbackReply(int feedback
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error updating feedback reply: {ex.Message}");
             }
         }
+
+
+[HttpGet("feedback-counts")]
+public async Task<ActionResult<FeedbackCountsDto>> GetFeedbackCounts()
+{
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var user = await _userManager.FindByIdAsync(userId.ToString());
+
+    if (user == null)
+    {
+        _logger.LogInformation($"User with ID {userId} not found.");
+        return NotFound();
+    }
+
+    var totalFeedbacks = await _context.Feedbacks
+        .Where(f => f.SenderId == user.Id)
+        .CountAsync();
+
+    var openFeedbacks = await _context.Feedbacks
+        .Where(f => f.SenderId == user.Id && f.Status == FeedbackStatus.Open)
+        .CountAsync();
+
+    var closedFeedbacks = await _context.Feedbacks
+        .Where(f => f.SenderId == user.Id && f.Status == FeedbackStatus.Closed)
+        .CountAsync();
+
+    var feedbackCountsDto = new FeedbackCountsDto
+    {
+        TotalFeedbacks = totalFeedbacks,
+        OpenFeedbacks = openFeedbacks,
+        ClosedFeedbacks = closedFeedbacks
+    };
+
+    return Ok(feedbackCountsDto);
+}
+
 
 
         [HttpPut("{feedbackId}/replies/{feedbackReplyId}")]

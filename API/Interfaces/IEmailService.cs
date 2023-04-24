@@ -12,6 +12,8 @@ namespace API.Interfaces
         Task SendFeedbackNotificationEmailAsync(string email, string feedbackTitle, int feedbackId);
 
         Task SendFeedbackNotificationStaffEmailAsync(string email, string feedbackTitle, int feedbackId);
+        
+        Task SendFeedbackNotificationReplyEmailAsync(string email, string feedbackTitle, int feedbackId);
 
     }
 }

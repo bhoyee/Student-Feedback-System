@@ -27,9 +27,11 @@ namespace API.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IFeedbackRepository _feedbackRepository;
         private readonly UserManager<AppUser> _userManager;
+        public readonly DataContext _context;
 
-        public DepartmentsController(UserManager<AppUser> userManager, IDeparmtentRepo departmentRepo, IMapper mapper, IUserRepository userRepository, IFeedbackRepository feedbackRepository)
+        public DepartmentsController(DataContext context, UserManager<AppUser> userManager, IDeparmtentRepo departmentRepo, IMapper mapper, IUserRepository userRepository, IFeedbackRepository feedbackRepository)
         {
+            _context = context;
             this._userManager = userManager;
             _feedbackRepository = feedbackRepository;
             _userRepository = userRepository;
@@ -323,6 +325,41 @@ namespace API.Controllers
                 return BadRequest(new { message = "Error creating feedback" });
             }
         }
+
+
+        // GET total feedback count per department
+        [HttpGet("dept/{departmentId}/feedback-counts")]
+        public async Task<ActionResult<DepartmentFeedbackCountsDto>> GetDepartmentFeedbackCounts(int departmentId)
+        {
+            var department = await _context.Departments.FindAsync(departmentId);
+
+            if (department == null)
+            {
+                return NotFound("Such Department does not exist");
+            }
+
+            var totalFeedbacks = await _context.Feedbacks
+                .Where(f => f.DepartmentId == departmentId)
+                .CountAsync();
+
+            var totalOpenFeedbacks = await _context.Feedbacks
+                .Where(f => f.DepartmentId == departmentId && f.Status == FeedbackStatus.Open)
+                .CountAsync();
+
+            var totalClosedFeedbacks = await _context.Feedbacks
+                .Where(f => f.DepartmentId == departmentId && f.Status == FeedbackStatus.Closed)
+                .CountAsync();
+
+            var countsDto = new DepartmentFeedbackCountsDto
+            {
+                TotalFeedbacks = totalFeedbacks,
+                TotalOpenFeedbacks = totalOpenFeedbacks,
+                TotalClosedFeedbacks = totalClosedFeedbacks
+            };
+
+            return countsDto;
+        }
+
 
 
 
