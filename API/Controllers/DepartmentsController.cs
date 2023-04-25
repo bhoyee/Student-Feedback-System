@@ -360,6 +360,22 @@ namespace API.Controllers
             return countsDto;
         }
 
+        // get all staffs in department 
+        [HttpGet("dept/{departmentId}/staffs")]
+        public async Task<ActionResult<IEnumerable<MemberDto>>> GetStaffsInDepartment(int departmentId)
+        {
+            var usersInDepartment = await _context.Users
+                .Include(u => u.Department)
+                .Where(u => u.Department.Id == departmentId && u.UserRoles.Any(ur => ur.Role.Name == "Staff"))
+                .ToListAsync();
+
+            var staffsInDepartment = _mapper.Map<IEnumerable<MemberDto>>(usersInDepartment);
+
+            return Ok(staffsInDepartment);
+        }
+
+
+
 
 
 
