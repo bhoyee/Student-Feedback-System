@@ -20,7 +20,21 @@ Note - feedback Status :
         Closed = 3
 ```
 
+``` 
 
+Note - Sameple Login Accounts :
+                
+        admin = admin/StuFeed0#,
+        Head Of Staff = james/StuFeed0#,
+        Academic Staff = bhoyee/StuFeed0#,
+        Non Academic Staff = smithluv/StuFeed0#
+        Student = easy/StuFeed0#
+```
+List of role nme (Case-sensitive)
+* Moderator
+* Staff
+* Staff-admin
+* Student
 
 ## API Reference
 
@@ -31,6 +45,16 @@ Note - feedback Status :
 
 ```http
   POST /api/account/register
+```
+```
+  Register body
+{
+    "username": "string",
+    "email": "string",
+    "password": "string",
+    "confirmpassword": "string",
+    "departmentId": int
+}
 ```
 
 | Parameter | Type     | Description                |
@@ -51,6 +75,13 @@ Registration Successful . Check email to verify your account
 ```http
   POST /api/account/login
 ```
+```
+  login body
+{
+	"username": "string",
+	"password": "string"
+}
+```
 
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
@@ -60,7 +91,7 @@ Registration Successful . Check email to verify your account
 
 #### status : 200 ok
 
-### Returns: 
+### Sample Returns: 
 ```
 {
     "username": "easy",
@@ -71,33 +102,124 @@ Registration Successful . Check email to verify your account
     ]
 }
 ```
-# DEPARTMENT
-#### (3) Create Department
+# ADMIN AREA
+#### (1) Get all Staffs per department
+
+Only login user with admin role can query this . Token need to be present
+
+```http
+  GET /api/admin/department/{departmentId}/staff
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `departmentId` | `INT` | department Id|
+
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+    {
+        "username": "james",
+        "fullName": "James Centro",
+    }
+```
+#### (2) Assign Staff as Staff-admin(Role)
+
+```http
+  POST /api/admin/edit-roles/{username}?roles={Name}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `username` | `string` | staff username |
+| `Name` | `string` | role name to be assigned to staff |
+
+
+List of role name (Case-sensitive)
+* Moderator
+* Staff
+* Staff-admin
+* Student
+
+
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+[
+    "Moderator",
+    "Staff"
+]
+```
+
+#### (3) Remove Staff-admin(Role) from Staff
+
+```http
+  POST /api/admin/remove-roles/{username}?roles={Name}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `username` | `string` | staff username |
+| `Name` | `string` | role name to be from moved  staff |
+
+
+List of role name (Case-sensitive)
+* Moderator
+* Staff
+* Staff-admin
+* Student
+
+
+
+#### status : 200 ok
+
+### Sample Returns: (this response show the remaining roles available for user)
+```
+[
+    "Staff"
+]
+```
+
+#### (4) Create Department
 
 ```http
   POST /api/departments
+```
+```
+  Department body
+{
+	"departmentname": "string",
+    "category": "string"
+}
 ```
 
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `departmentname` | `string` | **Required** |
+| `category` | `string` | **Required** (academic or non-academic) |
 
 
 #### status : 200 ok
 
-### Returns: 
+### Sample Returns: 
 ```
 {
-    "id": 1,
-    "departmentName": "computer sc",
-    "createdAt": "2023-04-26T06:41:53.3004964Z",
+    "id": 2,
+    "departmentName": "library",
+    "createdAt": "2023-04-27T06:00:20.0563436Z",
+    "category": "non-academic",
     "users": null,
     "petitions": null,
-    "feedbacks": null
+    "feedbacks": null,
+    "feedbackCount": 0
 }
 ```
 
-#### (4) View All Departments
+#### (5) View All Departments
 #### Get all departments
 ```http
   GET /api/departments/all/departments
@@ -105,11 +227,12 @@ Registration Successful . Check email to verify your account
 
 #### status : 200 ok
 
-### Returns: 
+### Sample Returns: 
 ```
 {
     "id": 1,
-    "departmentName": "computer sc",
+    "departmentName": "library",
+    "category": "non-academic",
     "createdAt": "2023-04-26T06:41:53.3004964Z",
     "users": null,
     "petitions": null,
@@ -117,7 +240,7 @@ Registration Successful . Check email to verify your account
 }
 ```
 
-#### (5) Get Specific Department details
+#### (6) Get Specific Department details
 ```http
   GET /api/departments/{id}
 ```
@@ -128,7 +251,7 @@ Registration Successful . Check email to verify your account
 
 #### status : 200 ok
 
-### Returns: 
+### Sample Returns: 
 ```
 {
     "id": 1,
@@ -140,8 +263,8 @@ Registration Successful . Check email to verify your account
     "totalOpenFeedback": 1
 }
 ```
-# STUDENT
-#### (6) Student - view user Profile
+# STUDENT AREA
+#### (1) Student - view user Profile
 ```http
   GET /api/users/{username}
 ```
@@ -156,7 +279,7 @@ Token generated in login must be provided to Authorized the user to be able to g
 
 #### status : 200 ok
 
-### Returns: 
+### Sample Returns: 
 ```
 {
     "id": 4,
@@ -179,13 +302,44 @@ Token generated in login must be provided to Authorized the user to be able to g
 }
 ```
 
-#### (7) Student - create feedback
+#### (2) Student - Get all departments user have access to
+```http
+  GET /api/users/departments
+```
+Note : Get all departments user get access  to but must be login user
+
+Token generated in login must be provided to Authorized the user
+
+#### status : 200 ok
+
+### Sample Return: 
+```
+{
+    "allDepartments": [
+        "computer sc",
+        "library",
+        "sport-centre",
+        "student-centre"
+    ]
+}
+```
+
+#### (3) Student - create feedback
 ```http
   POST /api/feedbacks/create
 ```
+```
+  create feedbacks body
+{
+    "title": "string",
+    "content": "string",
+    "isAnonymous": bool,
+    "departmentId": int
+}
+```
 Note : only a login user can create feedback
 
-Token generated in login must be provided to Authorized the user to be able to create the feedback
+Token generated in login must be provided to Authorized the user
 
 
 | Parameter | Type     | Description                       |
@@ -201,13 +355,13 @@ Token generated in login must be provided to Authorized the user to be able to c
 ### Returns: 
 Inserted successfully
 
-#### (8) Student - Get student feedbacks
+#### (4) Student - Get all feedback created by user
 ```http
   GET /api/feedbacks/user/{userId}
 ```
 Note : Get all student feedback but must be login user
 
-Token generated in login must be provided to Authorized the user to be able to get user profile
+Token generated in login must be provided to Authorized the user
 
 
 | Parameter | Type     | Description                       |
@@ -223,6 +377,50 @@ Note - feedback Status :
         Closed = 3
 ```
 ### Returns: 
+```
+[
+    {
+        "id": 1,
+        "title": "Master Data-Science Scholarship",
+        "content": "This to notify all student that Master Data-Science Scholarship is life now you can now apply",
+        "senderId": 0,
+        "senderName": "easy",
+        "status": 0,
+        "isAnonymous": false,
+        "openFeedbackCount": 0,
+        "departmentId": 0,
+        "departmentName": "data sc",
+        "assignedToId": null,
+        "assignedToName": null,
+        "dateCreated": "2023-04-26T13:39:35.5875212",
+        "targetAudience": null,
+        "feedbackReplies": []
+    }
+]
+```
+
+#### (5) Student - Get all feedback send from departments
+```http
+  GET /api/users/feedback
+```
+Note : Get all student feedback but must be login user
+
+Token generated in login must be provided to Authorized the user
+
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `username`      | `string` | login User username |
+
+#### status : 200 ok
+Note - feedback Status :
+```  
+        Open = 0,
+        InProgress = 1,
+        Resolved = 2,
+        Closed = 3
+```
+### Sample Returns: 
 ```
 [
     {
