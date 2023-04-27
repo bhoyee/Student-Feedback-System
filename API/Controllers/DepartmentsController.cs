@@ -39,57 +39,75 @@ namespace API.Controllers
            // _context = context;
             _mapper = mapper;
         }
-
         [HttpPost]
         public async Task<ActionResult<Department>> CreateDepartment(Department department)
         {
-            try{
+            try {
                 if (department == null)
                     return BadRequest();
-                
-                var createDepartment = await _DepartmentRepo.AddDepartment(department);
+
+                department.CreatedAt = DateTime.UtcNow; // set createdAt to current UTC time
+
+                var createdDepartment = await _DepartmentRepo.AddDepartment(department);
 
                 return CreatedAtAction(nameof(GetDepartment),
-                    new { id = createDepartment.Id}, createDepartment);
-            }
-            catch(Exception)
-            {
+                    new { id = createdDepartment.Id }, createdDepartment);
+            } catch(Exception) {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     "Error creating new department record");
             }
-        
-        } 
+        }
+        [HttpGet("all/departments")]
+        public async Task<IActionResult> GetAllDepartments()
+        {
+            var departments = await _context.Departments.ToListAsync();
+            return Ok(departments);
+        }
+
+
         [HttpGet] // api/department (this get all departments)
         public async Task<ActionResult<IEnumerable<DepartmentDto>>> GetDepartments()
         {
             var departments = await _DepartmentRepo.GetDepartmentsAsync();
-            var returnDepts = _mapper.Map<IEnumerable<DepartmentDisplayDto>>(departments);
-
-            foreach (var dept in returnDepts)
-            {
-                var users = await _userRepository.GetUsersByDepartmentAsync(dept.Id);
-                dept.totalUsers = users.Count();
-
-                var student_users = await _userRepository.GetUsersByDepartmentAndRoleAsync(dept.Id, "Student");
-                dept.totalStudents = student_users.Count();
-
-                var staff_users = await _userRepository.GetUsersByDepartmentAndRoleAsync(dept.Id, "Staff");
-                dept.totalStaffs = staff_users.Count();
-
-
-                var fback = await _feedbackRepository.GetFeedbacksByDepartmentIdAsync(dept.Id);
-                dept.totalFeedback = fback.Count();
-
-                var openFeedbackCount = await _feedbackRepository.GetOpenFeedbackCountByDepartmentAsync(dept.Id);
-                    dept.totalOpenFeedback = openFeedbackCount;
-
-
-               // Debug.WriteLine($"Department ID: {dept.Id}, Feedback Count: {dept.FeedbackCount}, Open Feedback Count: {dept.OpenFeedbackCount}");
-
-            }
+            var returnDepts = _mapper.Map<IEnumerable<DepartmentDto>>(departments);
 
             return Ok(returnDepts);
         }
+
+
+        // [HttpGet] // api/department (this get all departments)
+        // public async Task<ActionResult<IEnumerable<DepartmentDto>>> GetDepartments()
+        // {
+        //     var departments = await _DepartmentRepo.GetDepartmentsAsync();
+        //    // var returnDepts = _mapper.Map<IEnumerable<DepartmentDisplayDto>>(departments);
+        //     var returnDepts = _mapper.Map<IEnumerable<DepartmentDisplayDto>>(departments, opt => opt.Items["UserRepository"] = _userRepository);
+
+
+        //     foreach (var dept in returnDepts)
+        //     {
+        //         var users = await _userRepository.GetUsersByDepartmentAsync(dept.Id);
+        //         dept.totalUsers = users.Count();
+
+        //         var student_users = await _userRepository.GetUsersByDepartmentAndRoleAsync(dept.Id, "Student");
+        //         dept.totalStudents = student_users.Count();
+
+        //         var staff_users = await _userRepository.GetUsersByDepartmentAndRoleAsync(dept.Id, "Staff");
+        //         dept.totalStaffs = staff_users.Count();
+
+
+        //         var fback = await _feedbackRepository.GetFeedbacksByDepartmentIdAsync(dept.Id);
+        //         dept.totalFeedback = fback.Count();
+
+        //         var openFeedbackCount = await _feedbackRepository.GetOpenFeedbackCountByDepartmentAsync(dept.Id);
+        //             dept.totalOpenFeedback = openFeedbackCount;
+
+
+        //        // Debug.WriteLine($"Department ID: {dept.Id}, Feedback Count: {dept.FeedbackCount}, Open Feedback Count: {dept.OpenFeedbackCount}");
+
+        //     }
+
+        //     return Ok(returnDepts);
+        // }
 
         [HttpGet("{id}")]  //(this get a specific department)
      

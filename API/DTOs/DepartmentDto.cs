@@ -12,7 +12,7 @@ namespace API.DTOs
     {
         public int Id { get; set; }
         public string DepartmentName { get; set; }
-
+        public string Category { get; set; }
         public int FeedbackCount { get; set; }
 
       //  public List<UserDto> Users { get; set; }

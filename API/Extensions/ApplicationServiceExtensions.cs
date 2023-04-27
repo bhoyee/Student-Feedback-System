@@ -11,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using AutoMapper;
 using API.Helpers;
 
+
+
 namespace API.Extensions
 {
     public static class ApplicationServiceExtensions
@@ -34,9 +36,12 @@ namespace API.Extensions
 
             services.AddDbContext<DataContext>(options =>
             {
-                options.UseSqlite(config.GetConnectionString("DefaultConnection"));
+                options.UseSqlServer(config.GetConnectionString("DefaultConnection"));
             });
-            
+            services.AddSwaggerGen(c =>
+            { 
+                c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First()); //This line
+            });
             services.AddScoped<DbContext, DataContext>();
 
             return services;

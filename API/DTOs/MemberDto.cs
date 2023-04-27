@@ -14,6 +14,8 @@ namespace API.DTOs
         public string PhotoUrl { get; set; }
         public string Email { get; set; }
 
+        public string FullName {get; set;}
+
         public DateTime Created { get; set; } = DateTime.Now;
         
         public DateTime LastActive { get; set; } = DateTime.Now;

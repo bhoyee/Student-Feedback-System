@@ -8,6 +8,7 @@ namespace API.Entities
 {
     public class AppUser : IdentityUser<int>
     {
+        public string FullName {get; set; }
         public DateTime Created { get; set; } = DateTime.Now;
         
         public DateTime LastActive { get; set; } = DateTime.Now;
@@ -27,6 +28,8 @@ namespace API.Entities
         public ICollection<AppUserRole> UserRoles{get; set;}
 
         public ICollection<Feedback> Feedbacks{get; set;}
+        public ICollection<FeedbackRecipient> FeedbackRecipients { get; set; }
+
 
 
         /// use case for petition voting

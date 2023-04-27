@@ -25,6 +25,8 @@ namespace API.Interfaces
 
         Task<IEnumerable<AppUser>> GetUsersByDepartmentAndRoleAsync(int departmentId, string roleName);
 
+        Task<List<Department>> GetUserDepartmentsByUserIdAsync(string userId);
+
 
 
     }

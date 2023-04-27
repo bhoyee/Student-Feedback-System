@@ -9,6 +9,7 @@ namespace API.DTOs
     {
         public int Id { get; set; }
         public string DepartmentName { get; set; }
+        public string Category { get; set; }
 
         public int totalFeedback { get; set; }
 

@@ -64,6 +64,7 @@ namespace API
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1"));
+
             }
             app.UseMiddleware<ExeceptionMiddleware>();
 
@@ -88,6 +89,7 @@ namespace API
                 endpoints.MapControllerRoute(
                     name: "passwordReset",
                     pattern: "{controller=Account}/{action=ResetPassword}/{code?}");
+                //endpoints.MapFallbackToController("Index", "Fallback");
             });
 
 

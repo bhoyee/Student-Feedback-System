@@ -175,6 +175,15 @@ namespace API.Data
                 .SingleOrDefaultAsync();
         }
 
+        public async Task<List<Department>> GetUserDepartmentsByUserIdAsync(string userId)
+        {
+            var departments = await _context.Departments
+                .Where(d => d.Users.Any(ud => ud.Id == int.Parse(userId)))
+                .ToListAsync();
+
+            return departments;
+        }
+
   
 
         // public async Task<MemberDto> GetMemberAsync(string username)

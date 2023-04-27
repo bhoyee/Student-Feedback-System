@@ -61,6 +61,7 @@ namespace API.Controllers
 
         //     return Ok(feedbackDtos);
         // }
+        // get  user feedback
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetUserFeedbacks(int userId, FeedbackReplyDto feedbackReplyDto)
         {
@@ -635,6 +636,8 @@ namespace API.Controllers
         //         return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while saving the feedback reply");
         //     }
         // }
+
+        //staff reply to feedback -- need to move to department
         [HttpPost("{feedbackId}/reply")]
 public async Task<ActionResult<string>> AddReply(int feedbackId, FeedbackReplyDto feedbackReplyDto)
 {
@@ -694,14 +697,13 @@ public async Task<ActionResult<string>> AddReply(int feedbackId, FeedbackReplyDt
     try
     {
         await _context.SaveChangesAsync();
-        foreach (var recipient in feedback.Replies)
-        {
-            var student = await _userManager.FindByIdAsync(recipient.UserId.ToString());
-            if (student != null)
-            {
-                await _emailService.SendFeedbackNotificationReplyEmailAsync(student.Email, feedback.Title, feedback.Id);
-            }
-        }
+
+        // Get the feedback creator
+        var feedbackCreator = await _userManager.FindByIdAsync(feedback.SenderId.ToString());
+
+        // Send email notification to the feedback creator
+        await _emailService.SendFeedbackNotificationReplyEmailAsync(feedbackCreator.Email, feedback.Title, feedback.Id);
+
         _logger.LogInformation($"Feedback reply added successfully to feedback with ID {feedbackId}.");
         return Ok("Reply added successfully");
     }

@@ -17,6 +17,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
+
     "API": {
       "commandName": "Project",
       "dotnetRunMessages": "true",

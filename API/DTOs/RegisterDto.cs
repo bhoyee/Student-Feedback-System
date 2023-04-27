@@ -9,7 +9,8 @@ namespace API.DTOs
 {
     public class RegisterDto
     {
-        
+        [Required(ErrorMessage ="Fullname Required")]
+        public string FullName { get; set; }
         public string Username { get; set; }
 
         [Required(ErrorMessage ="Password Required")]

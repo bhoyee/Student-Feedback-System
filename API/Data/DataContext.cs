@@ -69,7 +69,7 @@ namespace API.Data
                     .HasMany(d => d.Petitions)
                     .WithOne(u => u.Department)
                     .HasForeignKey(u => u.DepartmentId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 builder.Entity<Department>()
                     .HasMany(d => d.Users)
@@ -88,7 +88,7 @@ namespace API.Data
                     .HasOne(p => p.Department)
                     .WithMany(d => d.Petitions)
                     .HasForeignKey(p => p.DepartmentId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 builder.Entity<Petition>()
                     .HasMany(p => p.Votes)
@@ -97,17 +97,24 @@ namespace API.Data
                     .OnDelete(DeleteBehavior.Cascade);
                 
                 builder.Entity<PetitionReply>()
-                    .HasOne<Petition>(p => p.Petition)
-                    .WithMany(pr => pr.PetitionReply)
-                    .HasForeignKey(p => p.PetitionId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .HasOne(pr => pr.Petition)
+                    .WithMany()
+                    .HasForeignKey(pr => pr.PetitionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 
 
                 builder.Entity<Vote>()
                     .HasOne<AppUser>(u => u.User)
                     .WithMany(v => v.Votes)
-                    .HasForeignKey(p => p.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .HasForeignKey(p => p.UserId);
+
+                builder.Entity<Vote>()
+                    .HasOne(v => v.Petition)
+                    .WithMany(p => p.Votes)
+                    .HasForeignKey(v => v.PetitionId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
                     
                 
                 builder.Entity<Feedback>()
@@ -123,7 +130,8 @@ namespace API.Data
                 builder.Entity<Feedback>()
                     .HasOne(f => f.Department)
                     .WithMany(d => d.Feedbacks)
-                    .HasForeignKey(f => f.DepartmentId);
+                    .HasForeignKey(f => f.DepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 builder.Entity<Feedback>()
                     .HasMany(f => f.Replies)
@@ -135,10 +143,37 @@ namespace API.Data
                     .WithMany()
                     .HasForeignKey(r => r.UserId);
 
+                builder.Entity<FeedbackReply>()
+                    .HasOne(fr => fr.Feedback)
+                    .WithMany(f => f.Replies)
+                    .HasForeignKey(fr => fr.FeedbackId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+
                 builder.Entity<Department>()
                     .HasMany(d => d.Feedbacks)
                     .WithOne(f => f.Department)
-                    .HasForeignKey(f => f.DepartmentId);
+                    .HasForeignKey(f => f.DepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                builder.Entity<Feedback>()
+                    .HasKey(f => f.Id);
+
+                builder.Entity<FeedbackRecipient>()
+                    .HasKey(fr => new { fr.FeedbackId, fr.RecipientId });
+
+                builder.Entity<FeedbackRecipient>()
+                    .HasOne(fr => fr.Feedback)
+                    .WithMany(f => f.Recipients)
+                    .HasForeignKey(fr => fr.FeedbackId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                builder.Entity<FeedbackRecipient>()
+                    .HasOne(fr => fr.Recipient)
+                    .WithMany(r => r.FeedbackRecipients)
+                    .HasForeignKey(fr => fr.RecipientId)
+                    .OnDelete(DeleteBehavior.Cascade);
+              
                 
 
              

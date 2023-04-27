@@ -23,6 +23,7 @@ namespace API.Entities
         public ICollection<FeedbackReply> Replies { get; set; }
         public int? RecipientId { get; set; } 
         public ICollection<FeedbackRecipient> Recipients { get; set; }
+  
 
       //  public ICollection<FeedbackStatus> Status { get; set; }
 

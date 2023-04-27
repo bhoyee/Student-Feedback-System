@@ -24,8 +24,10 @@ namespace API.Controllers
         public readonly IUserRepository _userRepository;
         public readonly IPhotoService _photoService;
         private readonly IFeedbackRepository _feedbackRepository;
-        public UsersController(IUserRepository userRepository, IMapper mapper, IPhotoService photoService, IFeedbackRepository feedbackRepository)
+        public readonly IDeparmtentRepo _departmentRepo;
+        public UsersController(IUserRepository userRepository, IDeparmtentRepo departmentRepo, IMapper mapper, IPhotoService photoService, IFeedbackRepository feedbackRepository)
         {
+            _departmentRepo = departmentRepo;
             _feedbackRepository = feedbackRepository;
             _photoService = photoService;
             _userRepository = userRepository;
@@ -177,6 +179,38 @@ namespace API.Controllers
 
             return Ok(feedback);
         }
+
+        //get list of departments available for user
+        [HttpGet("departments")]
+        public async Task<IActionResult> GetDepartmentsForUser()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var departments = await _departmentRepo.GetDepartmentsAsync();
+
+            var userDepartments = await _userRepository.GetUserDepartmentsByUserIdAsync(userId);
+
+            var academicDepartments = userDepartments
+                .Where(ud => ud.Category == "academic")
+                .Select(ud => ud.DepartmentName)
+                .ToList();
+
+            var nonAcademicDepartments = departments
+                .Where(d => d.Category == "non-academic")
+                .Select(d => d.DepartmentName)
+                .ToList();
+
+            var allDepartments = academicDepartments.Concat(nonAcademicDepartments).ToList();
+
+            var result = new {
+                AllDepartments = allDepartments
+            };
+
+            return Ok(result);
+        }
+
+
+
 
     }
 }

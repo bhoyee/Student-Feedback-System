@@ -9,6 +9,7 @@ namespace API.DTOs
     public class DepartmentNameDto
     {
         public string DepartmentName { get; set; }
+        public string Category {get; set;}
        // public ICollection<Feedback> Feedbacks { get; set; }
         
     }
