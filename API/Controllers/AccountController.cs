@@ -27,9 +27,11 @@ namespace API.Controllers
         private readonly SignInManager<AppUser> _signInManager;
 
         private readonly IEmailService _emailService;
+        public readonly IUserRepository _userRepository;
         
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ITokenService tokenService, IEmailService emailService, IMapper mapper)
+        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ITokenService tokenService, IEmailService emailService, IMapper mapper, IUserRepository userRepository)
         {
+            _userRepository = userRepository;
             _emailService = emailService;
             _signInManager = signInManager;
             _userManager = userManager;
@@ -112,6 +114,7 @@ namespace API.Controllers
                 Username = user.UserName,
                 Token = await _tokenService.CreateToken(user),
                 PhotoUrl = user.Photos?.FirstOrDefault(x => x.IsMain)?.Url,
+                FullName = user.FullName,
                 Role = roleNames.ToList()
             };
 
@@ -149,6 +152,8 @@ namespace API.Controllers
                 return BadRequest("Email verification failed.");
             }
         }
+
+
         
     }
 }

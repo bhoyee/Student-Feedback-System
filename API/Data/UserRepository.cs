@@ -18,8 +18,10 @@ namespace API.Data
         public readonly DataContext _context;
         public readonly IMapper _mapper;
         public readonly UserManager<AppUser> _userManager;
+  
         public UserRepository(DataContext context, IMapper mapper, UserManager<AppUser> userManager)
         {
+        
             _userManager = userManager;
             _mapper = mapper;
             _context = context;
@@ -91,22 +93,7 @@ namespace API.Data
                 })
                 .ToListAsync();
         }
-        // public async Task<List<AppUser>> GetUsersByDepartmentAndRoleAsync(int departmentId, string roleName)
-        // {
-        //     var role = await _userManager.FindByNameAsync(roleName);
-        //     if (role == null)
-        //     {
-        //         throw new ApplicationException($"Role '{roleName}' does not exist.");
-        //     }
 
-        //     var users = await _context.Users
-        //         .Include(u => u.Department)
-        //         .Where(u => u.Department.Id == departmentId)
-        //         .Where(u => u.UserRoles.Any(ur => ur.RoleId == role.Id))
-        //         .ToListAsync();
-
-        //     return users;
-        // }
         public async Task<IEnumerable<AppUser>> GetUsersByDepartmentAndRoleAsync(int departmentId, string roleName)
         {
             var users = await _context.Users
@@ -116,55 +103,6 @@ namespace API.Data
 
             return _mapper.Map<IEnumerable<AppUser>>(users);
         }
-
-
-
-
-
-
-
-
-
-
-
-
-        // public async Task<PagedList<MemberDto>> GetMembersAsync(UserParams userParams)
-        // {
-        //     var query = _context.Users
-        //         .Include(u => u.Feedbacks)
-        //         .OrderByDescending(u => u.LastActive)
-        //         .AsQueryable();
-
-        //     if (userParams.MinAge != 18 || userParams.MaxAge != 99)
-        //     {
-        //         var minDob = DateTime.Today.AddYears(-userParams.MaxAge - 1);
-        //         var maxDob = DateTime.Today.AddYears(-userParams.MinAge);
-
-        //         query = query.Where(u => u.DateOfBirth >= minDob && u.DateOfBirth <= maxDob);
-        //     }
-
-        //     if (!string.IsNullOrEmpty(userParams.Gender))
-        //     {
-        //         query = query.Where(u => u.Gender == userParams.Gender);
-        //     }
-
-        //     if (!string.IsNullOrEmpty(userParams.OrderBy))
-        //     {
-        //         switch (userParams.OrderBy)
-        //         {
-        //             case "created":
-        //                 query = query.OrderByDescending(u => u.Created);
-        //                 break;
-        //             default:
-        //                 query = query.OrderByDescending(u => u.LastActive);
-        //                 break;
-        //         }
-        //     }
-
-        //     var members = query.ProjectTo<MemberDto>(_mapper.ConfigurationProvider).AsNoTracking();
-        //     return await PagedList<MemberDto>.CreateAsync(members, userParams.pageNumber, userParams.PageSize);
-        // }
-
 
         public async Task<MemberDto> GetMemberAsync(string username)
         {
@@ -183,32 +121,24 @@ namespace API.Data
 
             return departments;
         }
+        public async Task<IEnumerable<UserDto>> GetStaffUsersInDepartmentAsync(int departmentId)
+        {
+            var users = await _context.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .Where(u => u.UserRoles.Any(ur => ur.Role.Name == "staff" && ur.User.DepartmentId == departmentId))
+                .ToListAsync();
 
-  
-
-        // public async Task<MemberDto> GetMemberAsync(string username)
-        // {
-        //     var user = await _context.Users
-        //         .SingleOrDefaultAsync(x => x.UserName == username);
-
-        //     var feedbacks = await _context.Feedbacks
-        //         .Where(x => x.SenderId == user.Id)
-        //         .ToListAsync();
-
-        //     var member = _mapper.Map<MemberDto>(user);
-        //     member.Feedbacks = feedbacks.Select(x => _mapper.Map<FeedbackDto>(x)).ToList();
-
-
-
-
-        //     return member;
-        // }
+            return users
+                .Select(u => new UserDto {
+                    Username = u.UserName,
+                    FullName = u.FullName
+                });
+        }
 
 
 
-
-
-
+    
 
 
     }

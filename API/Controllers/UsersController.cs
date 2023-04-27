@@ -14,6 +14,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using API.Extensions;
 using API.Helpers;
+using Microsoft.AspNetCore.Identity;
 
 namespace API.Controllers
 {
@@ -25,8 +26,10 @@ namespace API.Controllers
         public readonly IPhotoService _photoService;
         private readonly IFeedbackRepository _feedbackRepository;
         public readonly IDeparmtentRepo _departmentRepo;
-        public UsersController(IUserRepository userRepository, IDeparmtentRepo departmentRepo, IMapper mapper, IPhotoService photoService, IFeedbackRepository feedbackRepository)
+        public readonly  UserManager<AppUser> _userManager;
+        public UsersController(UserManager<AppUser> userManager, IUserRepository userRepository, IDeparmtentRepo departmentRepo, IMapper mapper, IPhotoService photoService, IFeedbackRepository feedbackRepository)
         {
+            _userManager = userManager;
             _departmentRepo = departmentRepo;
             _feedbackRepository = feedbackRepository;
             _photoService = photoService;
@@ -58,25 +61,6 @@ namespace API.Controllers
         {
             return await _userRepository.GetMemberAsync(username);
           //  return _mapper.Map<MemberDto>(user);
-
-            
-        //     try
-        //    {
-        //     var user = await _userRepository.GetUserByUsernameAsync(username);
-            
-      
-        //     if(user == null)
-        //     {
-        //         return NotFound($"No user found");
-        //     }
-        //     return _mapper.Map<MemberDto>(user);
-
-        //    }
-        //    catch(Exception)
-        //    {
-        //         return StatusCode(StatusCodes.Status500InternalServerError,
-        //             "Error in deleting department record from database");
-        //    }
 
         }
 
@@ -207,6 +191,43 @@ namespace API.Controllers
             };
 
             return Ok(result);
+        }
+
+        //Staff-admin adding Department moderator
+        [Authorize(Policy = "RequireStaffAdminRole")]
+        [HttpPost("dept/edit-roles/{username}")]
+        public async Task<ActionResult> EditRoles(string username, [FromQuery] string roles) 
+        {
+            var selecedRoles = roles.Split(",").ToArray();
+            var user = await _userManager.FindByNameAsync(username);
+             if (user == null) return NotFound("Could not find user");
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var result = await _userManager.AddToRolesAsync(user, selecedRoles.Except(userRoles));
+
+            if (!result.Succeeded) return  BadRequest("Failed to add to role");
+
+          //  result = await _userManager.RemoveFromRolesAsync(user, userRoles.Except(selecedRoles));
+
+            if (!result.Succeeded) return BadRequest("Failed to remov from roles");
+
+            return Ok(await _userManager.GetRolesAsync(user));
+
+        }
+
+                //remove role from user
+        [Authorize(Policy = "RequireStaffAdminRole")]
+        [HttpPost("dept/remove-roles/{username}")]
+        public async Task<ActionResult> RemoveRoles(string username, [FromQuery] string roles) 
+        {
+            var selectedRoles = roles.Split(",").ToArray();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null) return NotFound("Could not find user");
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var result = await _userManager.RemoveFromRolesAsync(user, selectedRoles.Intersect(userRoles));
+
+            if (!result.Succeeded) return  BadRequest("Failed to remove role");
+
+            return Ok(await _userManager.GetRolesAsync(user));
         }
 
 
