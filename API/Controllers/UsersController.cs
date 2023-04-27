@@ -27,8 +27,10 @@ namespace API.Controllers
         private readonly IFeedbackRepository _feedbackRepository;
         public readonly IDeparmtentRepo _departmentRepo;
         public readonly  UserManager<AppUser> _userManager;
-        public UsersController(UserManager<AppUser> userManager, IUserRepository userRepository, IDeparmtentRepo departmentRepo, IMapper mapper, IPhotoService photoService, IFeedbackRepository feedbackRepository)
+        public readonly IHttpContextAccessor _httpContextAccessor;
+        public UsersController(UserManager<AppUser> userManager, IUserRepository userRepository, IDeparmtentRepo departmentRepo, IMapper mapper, IPhotoService photoService, IFeedbackRepository feedbackRepository, IHttpContextAccessor httpContextAccessor)
         {
+            _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
             _departmentRepo = departmentRepo;
             _feedbackRepository = feedbackRepository;
@@ -229,6 +231,16 @@ namespace API.Controllers
 
             return Ok(await _userManager.GetRolesAsync(user));
         }
+
+        [Authorize(Roles = "Staff")]
+        [HttpGet("total-students")]
+        public async Task<IActionResult> GetTotalStudentUsersInDepartment()
+        {
+            var username = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
+            var totalStudents = await _userRepository.GetTotalStudentUsersInDepartmentAsync(username);
+            return Ok(totalStudents);
+        }
+
 
 
 

@@ -28,6 +28,9 @@ namespace API.Interfaces
 
         Task<List<Department>> GetUserDepartmentsByUserIdAsync(string userId);
         Task<IEnumerable<UserDto>> GetStaffUsersInDepartmentAsync(int departmentId);
+       // Task<int> GetTotalStudentUsersInDepartmentAsync(int departmentId);
+        Task<int> GetTotalStudentUsersInDepartmentAsync(string staffUsername);
+
 
 
 

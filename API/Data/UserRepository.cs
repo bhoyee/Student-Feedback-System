@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
@@ -8,6 +9,7 @@ using API.Helpers;
 using API.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,9 +20,11 @@ namespace API.Data
         public readonly DataContext _context;
         public readonly IMapper _mapper;
         public readonly UserManager<AppUser> _userManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
   
-        public UserRepository(DataContext context, IMapper mapper, UserManager<AppUser> userManager)
+        public UserRepository(DataContext context, IMapper mapper, UserManager<AppUser> userManager, IHttpContextAccessor httpContextAccessor)
         {
+            _httpContextAccessor = httpContextAccessor;
         
             _userManager = userManager;
             _mapper = mapper;
@@ -136,10 +140,29 @@ namespace API.Data
                 });
         }
 
+        public async Task<int> GetTotalStudentUsersInDepartmentAsync(string staffUsername)
+        {
+            var currentUser = _httpContextAccessor.HttpContext.User;
+            if (currentUser.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "Staff"))
+            {
+                var department = await _context.Departments
+                    .Include(d => d.Users)
+                    .FirstOrDefaultAsync(d => d.Users.Any(u => u.UserName == staffUsername));
 
+                if (department == null)
+                    throw new ArgumentException("Invalid department id");
 
-    
+                var totalStudents = await _context.Users
+                    .Where(u => u.DepartmentId == department.Id && u.UserRoles != null && u.UserRoles.Any(r => r.Role.Name == "Student"))
+                    .CountAsync();
 
+                return totalStudents;
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("User must have staff role to access this resource");
+            }
+        }
 
     }
 }
