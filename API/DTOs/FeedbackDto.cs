@@ -15,6 +15,8 @@ namespace API.DTOs
      public string Content { get; set; }
      public int SenderId { get; set; }
      public string SenderName { get; set; }
+
+     public string SenderFullName {get; set;}
      public FeedbackStatus Status { get; set; } =0; // modified type to FeedbackStatus
      public bool IsAnonymous { get; set; }
 

@@ -28,8 +28,10 @@ namespace API.Controllers
         public readonly IDeparmtentRepo _departmentRepo;
         public readonly  UserManager<AppUser> _userManager;
         public readonly IHttpContextAccessor _httpContextAccessor;
-        public UsersController(UserManager<AppUser> userManager, IUserRepository userRepository, IDeparmtentRepo departmentRepo, IMapper mapper, IPhotoService photoService, IFeedbackRepository feedbackRepository, IHttpContextAccessor httpContextAccessor)
+        public readonly DataContext _context;
+        public UsersController(DataContext context,UserManager<AppUser> userManager, IUserRepository userRepository, IDeparmtentRepo departmentRepo, IMapper mapper, IPhotoService photoService, IFeedbackRepository feedbackRepository, IHttpContextAccessor httpContextAccessor)
         {
+            _context = context;
             _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
             _departmentRepo = departmentRepo;
@@ -240,9 +242,6 @@ namespace API.Controllers
             var totalStudents = await _userRepository.GetTotalStudentUsersInDepartmentAsync(username);
             return Ok(totalStudents);
         }
-
-
-
 
 
     }

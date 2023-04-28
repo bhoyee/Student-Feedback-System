@@ -89,11 +89,14 @@ namespace API.Data
 
         public async Task<IEnumerable<AppUser>> GetUsersByDepartmentAsync(int departmentId)
         {
+            
                return await _context.Users
-                .Where(u => u.DepartmentId == departmentId)
+                .Where(u => u.DepartmentId == departmentId && u.UserRoles.Any(r => r.Role.Name == "Staff"))
                 .Select(u => new AppUser {
                     UserName = u.UserName,
-                    Email = u.Email
+                    FullName = u.FullName,
+                    Email = u.Email,
+                  
                 })
                 .ToListAsync();
         }

@@ -28,9 +28,11 @@ namespace API.Controllers
         private readonly IFeedbackRepository _feedbackRepository;
         private readonly UserManager<AppUser> _userManager;
         public readonly DataContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public DepartmentsController(DataContext context, UserManager<AppUser> userManager, IDeparmtentRepo departmentRepo, IMapper mapper, IUserRepository userRepository, IFeedbackRepository feedbackRepository)
+        public DepartmentsController(IHttpContextAccessor httpContextAccessor, DataContext context, UserManager<AppUser> userManager, IDeparmtentRepo departmentRepo, IMapper mapper, IUserRepository userRepository, IFeedbackRepository feedbackRepository)
         {
+            _httpContextAccessor = httpContextAccessor;
             _context = context;
             this._userManager = userManager;
             _feedbackRepository = feedbackRepository;
@@ -194,7 +196,7 @@ namespace API.Controllers
          
         }
 
-
+        // get all feedbacks in department by providing the departmentId
         [HttpGet("{departmentId}/feedbacks")]
         public async Task<IActionResult> GetFeedbacksByDepartment(int departmentId)
         {
@@ -202,6 +204,59 @@ namespace API.Controllers
 
             return Ok(feedbackDtos);
         }
+
+[Authorize(Roles = "Moderator,Staff-admin")]
+[HttpGet("department-feedback")]
+public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetDepartmentFeedback()
+{
+    try
+    {
+        var currentUser = await _userRepository.GetUserByUsernameAsync(User.FindFirstValue(ClaimTypes.Name));
+        if (currentUser == null)
+        {
+            return NotFound($"Unable to retrieve user with username {User.FindFirstValue(ClaimTypes.Name)}");
+        }
+
+        int departmentId = 0;
+        if (currentUser.DepartmentId != null)
+        {
+            departmentId = currentUser.DepartmentId;
+        }
+
+        var feedback = await _feedbackRepository.GetAllFeedbacksByDepartmentIdAsync(departmentId);
+        var feedbackDtos = _mapper.Map<IEnumerable<FeedbackDto>>(feedback);
+
+        foreach (var feedbackDto in feedbackDtos)
+        {
+            if (feedbackDto.IsAnonymous)
+            {
+                feedbackDto.SenderName = "Anonymous";
+                feedbackDto.SenderFullName = "Anonymous";
+            }
+            else
+            {
+                var sender = await _userRepository.GetUserByIdAsync(feedbackDto.SenderId);
+                if (sender != null)
+                {
+                    feedbackDto.SenderName = sender.UserName;
+                    feedbackDto.SenderFullName = $"{sender.FullName}";
+                }
+            }
+        }
+
+        return Ok(feedbackDtos);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(StatusCodes.Status500InternalServerError, "Error in retrieving record from database");
+    }
+}
+
+
+
+
+
+
 
 
         // Assuming you have a FeedbackRepository class with a GetFeedbackByIdAsync method
@@ -243,13 +298,8 @@ namespace API.Controllers
         }
 
 
-
-
-
-
-
         // api/departments/3 or userid
-        [HttpGet("{id:int}/users")] // this get all users in department
+        [HttpGet("{id:int}/users")] // this get all users(staff) in department
         public async Task<ActionResult<Department>> GetDepartment(int id)
         {
        
@@ -272,6 +322,39 @@ namespace API.Controllers
                     "Error in retriving record from database");
            }
         }
+        // get all staffs in the department of login staff
+        [HttpGet("staffs")]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetDepartmentUsers()
+        {
+            try
+            {
+                var currentUser = await _userRepository.GetUserByUsernameAsync(User.FindFirstValue(ClaimTypes.Name));
+                if (currentUser == null)
+                {
+                    return NotFound($"Unable to retrieve user with username {User.FindFirstValue(ClaimTypes.Name)}");
+                }
+
+                if (currentUser.DepartmentId == null)
+                {
+                    return BadRequest("User does not belong to any department");
+                }
+
+            int? departmentId = currentUser.DepartmentId;
+
+
+                var users = await _userRepository.GetUsersByDepartmentAndRoleAsync(departmentId.Value, "staff");
+                var userDtos = _mapper.Map<IEnumerable<useremailDTO>>(users);
+
+                return Ok(userDtos);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error in retrieving record from database");
+            }
+        }
+
+
+
 
         // private async Task<bool> DepartmentExists(string deptName)
         // {
