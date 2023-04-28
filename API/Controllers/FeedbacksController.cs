@@ -411,7 +411,7 @@ namespace API.Controllers
             // Get the list of feedback recipients based on the selected target audience
             var recipients = new List<FeedbackRecipient>();
 
-            if (feedbackDto.TargetAudience == FeedbackTargetAudience.Department.ToString())
+            if (feedbackDto.TargetAudience == FeedbackTargetAudience.Departments.ToString())
             {
                 // Get staffs with roles of 'Moderator' and 'Dept-Head' in the department
                 var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();

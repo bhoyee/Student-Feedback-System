@@ -7,7 +7,7 @@ namespace API.Entities
 {
     public enum FeedbackTargetAudience
     {
-        Department = 0,
-        AllStudents = 1
+        AllStudents = 1,
+        Departments = 2
     }
 }

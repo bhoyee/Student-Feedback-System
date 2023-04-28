@@ -30,6 +30,8 @@ namespace API.Interfaces
         Task<IEnumerable<UserDto>> GetStaffUsersInDepartmentAsync(int departmentId);
        // Task<int> GetTotalStudentUsersInDepartmentAsync(int departmentId);
         Task<int> GetTotalStudentUsersInDepartmentAsync(string staffUsername);
+        Task<IEnumerable<AppUser>> GetUsersByDepartmentIdAsync(int departmentId);
+
 
 
 

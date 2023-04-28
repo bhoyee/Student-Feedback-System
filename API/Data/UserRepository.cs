@@ -166,6 +166,20 @@ namespace API.Data
                 throw new UnauthorizedAccessException("User must have staff role to access this resource");
             }
         }
+ public async Task<IEnumerable<AppUser>> GetUsersByDepartmentIdAsync(int departmentId)
+{
+    var studentIds = await _context.Users
+        .Where(u => u.DepartmentId == departmentId && u.UserRoles.Any(ur => ur.Role.Name == "Student"))
+        .Select(s => s.Id)
+        .ToListAsync();
+
+    var students = await _context.Users
+        .Where(s => studentIds.Contains(s.Id))
+        .ToListAsync();
+
+    return students;
+}
+
 
     }
 }

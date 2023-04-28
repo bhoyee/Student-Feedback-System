@@ -42,7 +42,7 @@ namespace API.Services
         public async Task SendFeedbackNotificationEmailAsync(string email, string feedbackTitle, int feedbackId)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Student Feedback", "info@optimalhealthcare.com.ng"));
+            message.From.Add(new MailboxAddress("Student Feedback", "s.feedback@outlook.com"));
             message.To.Add(new MailboxAddress("",email));
             message.Subject = "New Feedback Available";
 
@@ -53,15 +53,15 @@ namespace API.Services
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new MailKit.Net.Smtp.SmtpClient();
-            await client.ConnectAsync("smtp.hostinger.com", 465, true);
-            await client.AuthenticateAsync("info@optimalhealthcare.com.ng", "Feedback01#");
+                await client.ConnectAsync("smtp.office365.com", 587, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync("s.feedback@outlook.com", "StuFeed0#");
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
         public async Task SendFeedbackNotificationStaffEmailAsync(string email, string feedbackTitle, int feedbackId)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Student Feedback", "info@optimalhealthcare.com.ng"));
+            message.From.Add(new MailboxAddress("Student Feedback", "s.feedback@outlook.com"));
             message.To.Add(new MailboxAddress("", email));
             message.Subject = "New Feedback Available";
 
@@ -72,8 +72,8 @@ namespace API.Services
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new MailKit.Net.Smtp.SmtpClient();
-            await client.ConnectAsync("smtp.hostinger.com", 465, true);
-            await client.AuthenticateAsync("info@optimalhealthcare.com.ng", "Feedback01#");
+            await client.ConnectAsync("smtp.office365.com", 587, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync("s.feedback@outlook.com", "StuFeed0#");
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
@@ -81,7 +81,7 @@ namespace API.Services
         public async Task SendFeedbackNotificationReplyEmailAsync(string email, string feedbackTitle, int feedbackId)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Student Feedback", "info@optimalhealthcare.com.ng"));
+            message.From.Add(new MailboxAddress("Student Feedback", "s.feedback@outlook.com"));
             message.To.Add(new MailboxAddress("",email));
             message.Subject = "New feedback reply";
 
@@ -94,8 +94,8 @@ namespace API.Services
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new MailKit.Net.Smtp.SmtpClient();
-            await client.ConnectAsync("smtp.hostinger.com", 465, true);
-            await client.AuthenticateAsync("info@optimalhealthcare.com.ng", "Feedback01#");
+            await client.ConnectAsync("smtp.office365.com", 587, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync("s.feedback@outlook.com", "StuFeed0#");
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }

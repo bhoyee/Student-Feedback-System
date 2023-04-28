@@ -435,7 +435,7 @@ namespace API.Data
 
         var feedback = await _context.Feedbacks
             .Where(f =>
-                (f.TargetAudience == FeedbackTargetAudience.Department && f.DepartmentId == departmentId) ||
+                (f.TargetAudience == FeedbackTargetAudience.Departments && f.DepartmentId == departmentId) ||
                 f.TargetAudience == FeedbackTargetAudience.AllStudents ||
                 f.Recipients.Any(r => r.RecipientId == int.Parse(studentId)))
             .Where(f => f.SenderId != int.Parse(studentId)) // Exclude feedback created by the student

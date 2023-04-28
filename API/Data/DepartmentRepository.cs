@@ -10,8 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using static API.Controllers.FeedbacksController;
 using Microsoft.Extensions.DependencyInjection;
-
-
+using Microsoft.AspNetCore.Http;
 
 namespace API.Data
 {
@@ -24,9 +23,11 @@ namespace API.Data
         public readonly IServiceProvider _serviceProvider;
         public readonly RoleManager<IdentityRole> _roleManager;
         public readonly IEmailService _emailService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public DepartmentRepository(DataContext context, IMapper mapper, RoleManager<IdentityRole> roleManager, UserManager<AppUser> userManager, IServiceProvider serviceProvider, IEmailService emailService)
+    public DepartmentRepository(IHttpContextAccessor httpContextAccessor, DataContext context, IMapper mapper, RoleManager<IdentityRole> roleManager, UserManager<AppUser> userManager, IServiceProvider serviceProvider, IEmailService emailService)
     {
+            _httpContextAccessor = httpContextAccessor;
             _emailService = emailService;
             _roleManager = roleManager;
             _serviceProvider = serviceProvider;
@@ -101,29 +102,32 @@ namespace API.Data
             throw new NotImplementedException();
         }
 
-        
+                
         public async Task<int> CreateFeedbackAsync(FeedbackDto feedbackDto)
         {
+            var user = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
             var feedback = new Feedback
             {
                 Title = feedbackDto.Title,
                 Content = feedbackDto.Content,
-                SenderId = feedbackDto.SenderId,
+                SenderId = user.Id,
                 IsAnonymous = feedbackDto.IsAnonymous,
-                DepartmentId = feedbackDto.DepartmentId,
+                DepartmentId = user.DepartmentId,
                 DateCreated = DateTime.Now,
+                TargetAudience = (FeedbackTargetAudience)(int)Enum.Parse(typeof(FeedbackTargetAudience), feedbackDto.TargetAudience),
             };
 
             // Get the list of feedback recipients based on the selected target audience
             List<FeedbackRecipient> recipients = new List<FeedbackRecipient>();
 
             var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            if (feedbackDto.TargetAudience == FeedbackTargetAudience.Department.ToString())
+            if (feedbackDto.TargetAudience == FeedbackTargetAudience.Departments.ToString())
             {
                 var studentsInDepartment = await _userManager.GetUsersInRoleAsync("Student");
                 foreach (var student in studentsInDepartment)
                 {
-                    if (student.DepartmentId == feedbackDto.DepartmentId)
+                    if (student.DepartmentId == user.DepartmentId)
                     {
                         recipients.Add(new FeedbackRecipient { RecipientId = student.Id, IsRead = false });
                     }
@@ -155,8 +159,6 @@ namespace API.Data
 
             return feedback.Id;
         }
-
-
 
         
     }

@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace API.Controllers
 {
@@ -29,9 +30,11 @@ namespace API.Controllers
         private readonly UserManager<AppUser> _userManager;
         public readonly DataContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<DepartmentsController> _logger;
 
-        public DepartmentsController(IHttpContextAccessor httpContextAccessor, DataContext context, UserManager<AppUser> userManager, IDeparmtentRepo departmentRepo, IMapper mapper, IUserRepository userRepository, IFeedbackRepository feedbackRepository)
+        public DepartmentsController(ILogger<DepartmentsController> logger,IHttpContextAccessor httpContextAccessor, DataContext context, UserManager<AppUser> userManager, IDeparmtentRepo departmentRepo, IMapper mapper, IUserRepository userRepository, IFeedbackRepository feedbackRepository)
         {
+            _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _context = context;
             this._userManager = userManager;
@@ -205,58 +208,52 @@ namespace API.Controllers
             return Ok(feedbackDtos);
         }
 
-[Authorize(Roles = "Moderator,Staff-admin")]
-[HttpGet("department-feedback")]
-public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetDepartmentFeedback()
-{
-    try
-    {
-        var currentUser = await _userRepository.GetUserByUsernameAsync(User.FindFirstValue(ClaimTypes.Name));
-        if (currentUser == null)
+        [Authorize(Roles = "Moderator,Staff-admin")]
+        [HttpGet("department-feedback")]
+        public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetDepartmentFeedback()
         {
-            return NotFound($"Unable to retrieve user with username {User.FindFirstValue(ClaimTypes.Name)}");
-        }
-
-        int departmentId = 0;
-        if (currentUser.DepartmentId != null)
-        {
-            departmentId = currentUser.DepartmentId;
-        }
-
-        var feedback = await _feedbackRepository.GetAllFeedbacksByDepartmentIdAsync(departmentId);
-        var feedbackDtos = _mapper.Map<IEnumerable<FeedbackDto>>(feedback);
-
-        foreach (var feedbackDto in feedbackDtos)
-        {
-            if (feedbackDto.IsAnonymous)
+            try
             {
-                feedbackDto.SenderName = "Anonymous";
-                feedbackDto.SenderFullName = "Anonymous";
-            }
-            else
-            {
-                var sender = await _userRepository.GetUserByIdAsync(feedbackDto.SenderId);
-                if (sender != null)
+                var currentUser = await _userRepository.GetUserByUsernameAsync(User.FindFirstValue(ClaimTypes.Name));
+                if (currentUser == null)
                 {
-                    feedbackDto.SenderName = sender.UserName;
-                    feedbackDto.SenderFullName = $"{sender.FullName}";
+                    return NotFound($"Unable to retrieve user with username {User.FindFirstValue(ClaimTypes.Name)}");
                 }
+
+                int departmentId = 0;
+                if (currentUser.DepartmentId != null)
+                {
+                    departmentId = currentUser.DepartmentId;
+                }
+
+                var feedback = await _feedbackRepository.GetAllFeedbacksByDepartmentIdAsync(departmentId);
+                var feedbackDtos = _mapper.Map<IEnumerable<FeedbackDto>>(feedback);
+
+                foreach (var feedbackDto in feedbackDtos)
+                {
+                    if (feedbackDto.IsAnonymous)
+                    {
+                        feedbackDto.SenderName = "Anonymous";
+                        feedbackDto.SenderFullName = "Anonymous";
+                    }
+                    else
+                    {
+                        var sender = await _userRepository.GetUserByIdAsync(feedbackDto.SenderId);
+                        if (sender != null)
+                        {
+                            feedbackDto.SenderName = sender.UserName;
+                            feedbackDto.SenderFullName = $"{sender.FullName}";
+                        }
+                    }
+                }
+
+                return Ok(feedbackDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error in retrieving record from database");
             }
         }
-
-        return Ok(feedbackDtos);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(StatusCodes.Status500InternalServerError, "Error in retrieving record from database");
-    }
-}
-
-
-
-
-
-
 
 
         // Assuming you have a FeedbackRepository class with a GetFeedbackByIdAsync method
@@ -387,33 +384,40 @@ public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetDepartmentFeedback(
 
         }
 
+
         [HttpPost("feedback/create")]
-        [Authorize(Roles = "Dept_Head, Moderator")]
+        [Authorize(Roles = "Dept_Head, Moderator, Staff-admin, Admin")]
         public async Task<IActionResult> CreateFeedback(FeedbackDto feedbackDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             var user = await _userManager.FindByIdAsync(userId);
 
             // Check if user has the necessary role
-            if (!await _userManager.IsInRoleAsync(user, "dept_head") && !await _userManager.IsInRoleAsync(user, "moderator"))
+            if (!await _userManager.IsInRoleAsync(user, "dept_head") &&
+                !await _userManager.IsInRoleAsync(user, "moderator") &&
+                !await _userManager.IsInRoleAsync(user, "staff-admin") &&
+                !await _userManager.IsInRoleAsync(user, "admin"))
             {
                 return Unauthorized();
             }
 
-            // Check if feedback is targeted to the user's department
-            if (feedbackDto.TargetAudience == FeedbackTargetAudience.Department.ToString() && feedbackDto.DepartmentId != user.DepartmentId)
+            if (feedbackDto.TargetAudience == FeedbackTargetAudience.AllStudents.ToString())
             {
-                return BadRequest(new { message = "Feedback target audience is invalid" });
+        
+                // If feedback is targeted to all students, allow only users with the "Moderator", "Staff-admin", and "Admin" roles
+                if (!await _userManager.IsInRoleAsync(user, "Staff-admin") ||
+                    (await _userManager.IsInRoleAsync(user, "Staff-admin") && user.Department.Category == "academic") &&
+                    !await _userManager.IsInRoleAsync(user, "Moderator") ||
+                    (await _userManager.IsInRoleAsync(user, "Moderator") && user.Department.Category == "academic"))
+                {
+                    return Unauthorized("You can only send feedback to students in your department");
+                }
             }
-
-            // Check if feedback is targeted to all students and user is not a moderator
-            if (feedbackDto.TargetAudience == FeedbackTargetAudience.AllStudents.ToString() && !await _userManager.IsInRoleAsync(user, "moderator"))
-            {
-                return Unauthorized();
-            }
-
+            
             feedbackDto.SenderId = user.Id;
             feedbackDto.DepartmentId = user.DepartmentId;
+
+            _logger.LogInformation("User Department ID: {0}", user.DepartmentId);
 
             var result = await _DepartmentRepo.CreateFeedbackAsync(feedbackDto);
 
@@ -425,7 +429,7 @@ public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetDepartmentFeedback(
             {
                 return BadRequest(new { message = "Error creating feedback" });
             }
-        }
+        }        
 
 
         // GET total feedback count per department
