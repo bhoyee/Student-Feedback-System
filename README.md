@@ -421,6 +421,36 @@ Note : If "isAnonymous": false, sender username and fullName will display else i
     }
 ]
 ```
+#### (5) Staff with Moderator or Staff-admin role can Create feedback and send to all students in the department
+
+##### While staff with Moderator or Staff-admin in Non academic can send feedback to all student that register on the portal
+
+```http
+  POST /api/departments/feedback/create
+```
+only users with Moderator , Staff-admin can crate this
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `title`      | `string` | feedback title|
+| `content`      | `string` | feedback content|
+| `isAnonymous`      | `bool` | true / false|
+| `targetAudience`      | `string` | Departments / AllStudents|
+
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+{
+    "message": "Feedback created successfully"
+}
+```
+#### status : 401 | Unauthorized
+
+```
+You can only send feedback to students in your department
+```
 
 
 # STUDENT AREA
