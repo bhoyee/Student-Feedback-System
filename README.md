@@ -26,7 +26,7 @@ Note - Sameple Login Accounts :
                 
         admin = admin/StuFeed0#,
         Head Of Staff = james/StuFeed0#,
-        Academic Staff = bhoyee/StuFeed0#,
+        Academic Staff(Moderator) = bhoyee/StuFeed0#,
         Non Academic Staff = smithluv/StuFeed0#
         Student = easy/StuFeed0#
 ```
@@ -150,7 +150,7 @@ List of role name (Case-sensitive)
 ### Sample Returns: 
 ```
 [
-    "Moderator",
+    "Staff-admin",
     "Staff"
 ]
 ```
@@ -164,10 +164,10 @@ List of role name (Case-sensitive)
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `username` | `string` | staff username |
-| `Name` | `string` | role name to be from moved  staff |
+| `Name` | `string` | role name to be removed |
 
 
-List of role name (Case-sensitive)
+List of role names (Case-sensitive)
 * Moderator
 * Staff
 * Staff-admin
@@ -263,6 +263,166 @@ List of role name (Case-sensitive)
     "totalOpenFeedback": 1
 }
 ```
+# STAFF AREA
+
+Staff with Staff-admin role can perform these tasks
+
+#### (1) Assign Staff as Moderator(Role)
+
+```http
+  POST /api/dept/edit-roles/{username}?roles={Name}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `username` | `string` | staff username |
+| `Name` | `string` | role name to be assigned to staff |
+
+
+List of role names (Case-sensitive)
+* Moderator
+* Staff-admin
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+[
+    "Moderator",
+    "Staff"
+]
+```
+#### (2) Remove Moderator OR Staff-admin(Role) from Staff
+
+```http
+  POST /api/admin/remove-roles/{username}?roles={Name}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `username` | `string` | staff username |
+| `Name` | `string` | role name to be removed |
+
+List of role names (Case-sensitive)
+* Moderator
+* Staff
+* Staff-admin
+* Student
+
+
+
+#### status : 200 ok
+
+### Sample Returns: (this response show the remaining roles available for user)
+```
+[
+    "Staff"
+]
+```
+#### (3) Staff - Get total num of students in department
+```http
+  GET /api/users/total-students
+```
+Note : Get total students in department
+
+Token generated in login must be provided with staff role to Authorized the user
+
+#### status : 200 ok
+
+### Sample Return: 
+```
+1  
+```
+
+#### (4) Staff - Get list of all staff in department
+```http
+  GET /api/departments/{id}/users
+```
+or you can use the below path for the same reponse
+
+but only user with staff role that use the query
+```http
+  GET /api/departments/staffs
+```
+Note : Get all staffs in the department
+
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `id`      | `int` | departmentId |
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+[
+    {
+        "userName": "bhoyee",
+        "fullName": "Adey Salith",
+        "email": "adey.salith@hull.ac.uk"
+    },
+    {
+        "userName": "james",
+        "fullName": "James Centro",
+        "email": "james.centro@hull.ac.uk"
+    }
+]
+```
+#### (4) Staff - Get all feedbacks send to department
+```http
+  GET /api/departments/department-feedback/
+```
+only users with Moderator , Staff-admin can view this
+
+
+Note : If "isAnonymous": false, sender username and fullName will display else it will show "Anonymous"
+
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+[
+    {
+        "id": 1,
+        "title": "Master Data-Science Scholarship",
+        "content": "This to notify all student that Master Data-Science Scholarship is life now you can now apply",
+        "senderId": 7,
+        "senderName": "Anonymous",
+        "senderFullName": "Anonymous",
+        "status": 0,
+        "isAnonymous": true,
+        "openFeedbackCount": 0,
+        "departmentId": 0,
+        "departmentName": null,
+        "assignedToId": null,
+        "assignedToName": null,
+        "dateCreated": "2023-04-26T13:39:35.5875212",
+        "targetAudience": null,
+        "feedbackReplies": []
+    },
+    {
+        "id": 2,
+        "title": "Deadline extension",
+        "content": "I will like to extend the submission of my course work due to some reason that arises",
+        "senderId": 7,
+        "senderName": "easy",
+        "senderFullName": "Bola Hammed",
+        "status": 0,
+        "isAnonymous": false,
+        "openFeedbackCount": 0,
+        "departmentId": 0,
+        "departmentName": null,
+        "assignedToId": null,
+        "assignedToName": null,
+        "dateCreated": "2023-04-28T03:20:15.6384101",
+        "targetAudience": null,
+        "feedbackReplies": []
+    }
+]
+```
+
+
 # STUDENT AREA
 #### (1) Student - view user Profile
 ```http
