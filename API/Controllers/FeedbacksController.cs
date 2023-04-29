@@ -62,41 +62,44 @@ namespace API.Controllers
         //     return Ok(feedbackDtos);
         // }
         // get  user feedback
-        [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetUserFeedbacks(int userId, FeedbackReplyDto feedbackReplyDto)
+[HttpGet("user/{userId}")]
+public async Task<IActionResult> GetUserFeedbacks(int userId)
+{
+    var feedbacks = await _context.Feedbacks
+        .Include(f => f.Sender)
+        .Include(f => f.Department)
+        .Include(f => f.AssignedTo)
+        .Include(f => f.Replies) // include feedback replies
+        .Where(f => f.SenderId == userId)
+        .OrderByDescending(f => f.DateCreated)
+        .ToListAsync();
+
+    var feedbackDtos = feedbacks.Select(f => new FeedbackDto
+    {
+        Id = f.Id,
+        Title = f.Title,
+        Content = f.Content,
+        SenderName = f.Sender != null ? f.Sender.UserName : null,
+        DepartmentName = f.Department != null ? f.Department.DepartmentName : null,
+        AssignedToName = f.AssignedTo != null ? f.AssignedTo.UserName : null,
+        DateCreated = f.DateCreated,
+        FeedbackReplies = f.Replies.Select(fr => new FeedbackReplyDto
         {
-            var feedbacks = await _context.Feedbacks
-                .Include(f => f.Sender)
-                .Include(f => f.Department)
-                .Include(f => f.AssignedTo)
-                .Include(f => f.Replies) // include feedback replies
-                .Where(f => f.SenderId == userId)
-                .OrderByDescending(f => f.DateCreated)
-                .ToListAsync();
+            Id = fr.Id,
+            FeedbackId = fr.FeedbackId,
+            Content = fr.Content,
+            IsPublic = fr.IsPublic,
+            UserId = fr.UserId,
+           // UserFullName = fr.User.UserName,
+            Status = (int?)fr.Status,
+           // Status = fr.Status,
+            UpdatedAt = fr.UpdatedAt
+        }).ToList()
+    });
 
-            var feedbackDtos = feedbacks.Select(f => new FeedbackDto
-            {
-                Id = f.Id,
-                Title = f.Title,
-                Content = f.Content,
-                SenderName = f.Sender != null ? f.Sender.UserName : null,
-                DepartmentName = f.Department != null ? f.Department.DepartmentName : null,
-                AssignedToName = f.AssignedTo != null ? f.AssignedTo.UserName : null,
-                DateCreated = f.DateCreated,
-                FeedbackReplies = f.Replies.Select(fr => new FeedbackReplyDto
-                {
-                    Id = fr.Id,
-                    FeedbackId = fr.FeedbackId,
-                    Content = fr.Content,
-                    IsPublic = fr.IsPublic,
-                    UserId = fr.UserId,
-                    Status = feedbackReplyDto.Status ?? (int?)fr.Status,
-                    UpdatedAt = fr.UpdatedAt
-                }).ToList()
-            });
+    return Ok(feedbackDtos);
+}
 
-            return Ok(feedbackDtos);
-        }
 
         //user getting individual feedback
         
@@ -277,7 +280,7 @@ namespace API.Controllers
                 .Include(f => f.Sender)
                 .Include(f => f.Department)
                 .Include(f => f.Replies)
-                .Where(f => f.AssignedToId == user.Id)
+                .Where(f => f.RecipientId == user.Id)
                 .ToListAsync();
 
             var feedbackDtos = feedbacks.Select(f => new FeedbackDto
@@ -287,32 +290,28 @@ namespace API.Controllers
                 Content = f.Content,
                 Status = f.Status,
                 IsAnonymous = f.IsAnonymous,
-                //IsPublic = f.IsPublic,
-                
                 DepartmentName = f.Department.DepartmentName,
-                
-                SenderName = (f.IsAnonymous ? null : new UserDto { Username = f.Sender.UserName}).ToString(),
-               // User = f.IsAnonymous ? null : new UserDto { Id = f.User.Id, Name = f.User.UserName },
+                SenderName = f.IsAnonymous ? "Anonymous" : f.Sender.UserName,
                 DateCreated = f.DateCreated,
-               
-               // CreatedAt = f.CreatedAt,
-                //UpdatedAt = f.UpdatedAt,
                 AssignedToId = f.AssignedToId,
-                //AssigneeId = f.AssigneeId,
                 FeedbackReplies = f.Replies.Select(r => new FeedbackReplyDto
                 {
                     Id = r.Id,
                     Content = r.Content,
                     IsPublic = r.IsPublic,
-                    //CreatedAt = r.CreatedAt,
                     UserId = r.UserId,
-                   // UserName = r.User.UserName
+                    UserFullName = user.FullName, // populate UserFullName property
+
                 }).ToList()
             }).ToList();
 
+            if (feedbackDtos.Count == 0)
+            {
+                return NoContent();
+            }
+
             return Ok(feedbackDtos);
         }
-
 
 
         [HttpGet("{feedbackId}")]
@@ -745,39 +744,52 @@ namespace API.Controllers
         }
 
 
-[HttpGet("feedback-counts")]
-public async Task<ActionResult<FeedbackCountsDto>> GetFeedbackCounts()
-{
-    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    var user = await _userManager.FindByIdAsync(userId.ToString());
+        [HttpGet("feedback-counts")]
+        public async Task<ActionResult<FeedbackCountsDto>> GetFeedbackCounts()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId.ToString());
 
-    if (user == null)
-    {
-        _logger.LogInformation($"User with ID {userId} not found.");
-        return NotFound();
-    }
+            if (user == null)
+            {
+                _logger.LogInformation($"User with ID {userId} not found.");
+                return NotFound();
+            }
 
-    var totalFeedbacks = await _context.Feedbacks
-        .Where(f => f.SenderId == user.Id)
-        .CountAsync();
+            var totalFeedbacks = await _context.Feedbacks
+                .Where(f => f.SenderId == user.Id)
+                .CountAsync();
 
-    var openFeedbacks = await _context.Feedbacks
-        .Where(f => f.SenderId == user.Id && f.Status == FeedbackStatus.Open)
-        .CountAsync();
+            var openFeedbacks = await _context.Feedbacks
+                .Where(f => f.SenderId == user.Id && f.Status == FeedbackStatus.Open)
+                .CountAsync();
 
-    var closedFeedbacks = await _context.Feedbacks
-        .Where(f => f.SenderId == user.Id && f.Status == FeedbackStatus.Closed)
-        .CountAsync();
+            var closedFeedbacks = await _context.Feedbacks
+                .Where(f => f.SenderId == user.Id && f.Status == FeedbackStatus.Closed)
+                .CountAsync();
 
-    var feedbackCountsDto = new FeedbackCountsDto
-    {
-        TotalFeedbacks = totalFeedbacks,
-        OpenFeedbacks = openFeedbacks,
-        ClosedFeedbacks = closedFeedbacks
-    };
+            var inProgressFeedbacks = await _context.Feedbacks
+                .Where(f => f.SenderId == user.Id && f.Status == FeedbackStatus.InProgress)
+                .CountAsync();
+            var resolvedFeedbacks = await _context.Feedbacks
+                .Where(f => f.SenderId == user.Id && f.Status == FeedbackStatus.Resolved)
+                .CountAsync();
 
-    return Ok(feedbackCountsDto);
-}
+            var feedbackCountsDto = new FeedbackCountsDto
+            {
+                TotalFeedbacks = totalFeedbacks,
+                OpenFeedbacks = openFeedbacks,
+                ClosedFeedbacks = closedFeedbacks,
+                InProgressFeedback = inProgressFeedbacks,
+                ResolvedFeedback = resolvedFeedbacks,
+                
+                
+                
+            
+            };
+
+            return Ok(feedbackCountsDto);
+        }
 
 
 

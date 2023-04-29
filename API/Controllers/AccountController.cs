@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -11,10 +12,13 @@ using API.Data;
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
+using API.Services;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MimeKit;
 
 namespace API.Controllers
 {
@@ -28,9 +32,11 @@ namespace API.Controllers
 
         private readonly IEmailService _emailService;
         public readonly IUserRepository _userRepository;
+        private readonly IConfiguration _configuration;
         
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ITokenService tokenService, IEmailService emailService, IMapper mapper, IUserRepository userRepository)
+        public AccountController(IConfiguration configuration, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ITokenService tokenService, IEmailService emailService, IMapper mapper, IUserRepository userRepository)
         {
+            _configuration = configuration;
             _userRepository = userRepository;
             _emailService = emailService;
             _signInManager = signInManager;
@@ -152,6 +158,53 @@ namespace API.Controllers
                 return BadRequest("Email verification failed.");
             }
         }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist or is not confirmed
+                return Ok();
+            }
+         //   var baseUrl = "https://sfbapi.azurewebsites.net/";
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resetUrl = $"https://sfbapi.azurewebsites.net/api/account/reset-password?email={model.Email}&token={WebUtility.UrlEncode(token)}";
+
+
+            // var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            // var resetUrl = $"{_configuration["AppUrl"]}/reset-password?email={model.Email}&token={WebUtility.UrlEncode(token)}";
+
+            // Send email to the user with the password reset link
+            var subject = "Password Reset Link";
+            await _emailService.SendnewEmailAsync(user.Email, subject, resetUrl);
+
+            return Ok("Reset password detail send to your mail");
+        }
+
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist or is not confirmed
+                return Ok();
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+            if (result.Succeeded)
+            {
+                return Ok("Password changed successfully");
+            }
+
+            // If we got this far, something failed, redisplay form
+            return BadRequest();
+        }
+
+
 
 
         

@@ -21,6 +21,27 @@ namespace API.Services
         {
             _smtpSettings = smtpSettings.Value;
         }
+        
+        public async Task SendnewEmailAsync(string email, string subject, string resetUrl)
+        {
+            var emailMessage = new MimeMessage();
+            emailMessage.From.Add(new MailboxAddress("Student Feedback", "s.feedback@outlook.com"));
+            emailMessage.To.Add(new MailboxAddress("", email));
+            emailMessage.Subject = subject;
+            emailMessage.Body = new TextPart("html")
+            {
+                Text = $"<p>Please click <a href='{resetUrl}'>here</a> to reset your password.</p>"
+            };
+
+            using (var client = new MailKit.Net.Smtp.SmtpClient())
+            {
+                await client.ConnectAsync("smtp.office365.com", 587, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync("s.feedback@outlook.com", "StuFeed0#");
+                await client.SendAsync(emailMessage);
+                await client.DisconnectAsync(true);
+            }
+        }
+
 
          public async Task SendEmailAsync(string email, string subject, string message)
         {
@@ -47,8 +68,8 @@ namespace API.Services
             message.Subject = "New Feedback Available";
 
             var bodyBuilder = new BodyBuilder();
-            bodyBuilder.HtmlBody = $"<p>Dear student,</p><p>A new feedback with title '{feedbackTitle}' is available for you to view. Click <a href='https://localhost:5001/api/feedbacks/{feedbackId}'>here</a> to view the feedback.</p>";
-            bodyBuilder.TextBody = $"Dear student, a new feedback with title '{feedbackTitle}' is available for you to view. Click here: https://localhost:5001/api/feedbacks/{feedbackId}";
+            bodyBuilder.HtmlBody = $"<p>Dear student,</p><p>A new feedback with title '{feedbackTitle}' is available for you to view. Click <a href='https://sfbapi.azurewebsites.net/api/feedbacks/{feedbackId}'>here</a> to view the feedback.</p>";
+            bodyBuilder.TextBody = $"Dear student, a new feedback with title '{feedbackTitle}' is available for you to view. Click here: https://sfbapi.azurewebsites.net/api/feedbacks/{feedbackId}";
 
             message.Body = bodyBuilder.ToMessageBody();
 
@@ -66,8 +87,8 @@ namespace API.Services
             message.Subject = "New Feedback Available";
 
             var bodyBuilder = new BodyBuilder();
-            bodyBuilder.HtmlBody = $"<p>Dear staff,</p><p>A new feedback with title '{feedbackTitle}' is available for you to view. Click <a href='https://localhost:5001/api/feedbacks/{feedbackId}'>here</a> to view the feedback.</p>";
-            bodyBuilder.TextBody = $"Dear staff, a new feedback with title '{feedbackTitle}' is available for you to view. Click here: https://localhost:5001/api/feedbacks/{feedbackId}";
+            bodyBuilder.HtmlBody = $"<p>Dear staff,</p><p>A new feedback with title '{feedbackTitle}' is available for you to view. Click <a href='https://sfbapi.azurewebsites.net/api/feedbacks/{feedbackId}'>here</a> to view the feedback.</p>";
+            bodyBuilder.TextBody = $"Dear staff, a new feedback with title '{feedbackTitle}' is available for you to view. Click here: https://sfbapi.azurewebsites.net/api/feedbacks/{feedbackId}";
 
             message.Body = bodyBuilder.ToMessageBody();
 
@@ -87,9 +108,9 @@ namespace API.Services
 
             var bodyBuilder = new BodyBuilder();
             
-            bodyBuilder.TextBody = $"Dear staff, a new feedback with title '{feedbackTitle}' is available for you to view. Click here: https://localhost:5001/api/feedbacks/{feedbackId}";
+            bodyBuilder.TextBody = $"Dear staff, a new feedback with title '{feedbackTitle}' is available for you to view. Click here: https://sfbapi.azurewebsites.net/api/feedbacks/{feedbackId}";
             bodyBuilder.TextBody = $"A new reply has been added to your feedback ({feedbackTitle}).\n\n" +
-                       $"You can view the feedback and its replies here: https://localhost:5001/api/feedbacks/{feedbackId}";
+                       $"You can view the feedback and its replies here: https://sfbapi.azurewebsites.net/api/feedbacks/{feedbackId}";
 
             message.Body = bodyBuilder.ToMessageBody();
 
@@ -99,6 +120,7 @@ namespace API.Services
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
+
     }
 
 }

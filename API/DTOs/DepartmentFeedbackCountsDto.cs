@@ -10,5 +10,7 @@ namespace API.DTOs
         public int TotalFeedbacks { get; set; }
         public int TotalOpenFeedbacks { get; set; }
         public int TotalClosedFeedbacks { get; set; }
+        public int TotalInProgress {get; set;}
+        public int ResolvedFeedback { get; set; }
     }
 }

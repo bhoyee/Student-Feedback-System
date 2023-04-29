@@ -507,12 +507,23 @@ public async Task<ActionResult<FeedbackDto>> GetFeedback(int feedbackId)
             var totalClosedFeedbacks = await _context.Feedbacks
                 .Where(f => f.DepartmentId == departmentId && f.Status == FeedbackStatus.Closed)
                 .CountAsync();
+            
+            var totalInProgressFeedbacks = await _context.Feedbacks
+                .Where(f => f.DepartmentId == departmentId && f.Status == FeedbackStatus.InProgress)
+                .CountAsync();
+
+            var totalResolvedFeedbacks = await _context.Feedbacks
+                .Where(f => f.DepartmentId == departmentId && f.Status == FeedbackStatus.Resolved)
+                .CountAsync();
 
             var countsDto = new DepartmentFeedbackCountsDto
             {
                 TotalFeedbacks = totalFeedbacks,
                 TotalOpenFeedbacks = totalOpenFeedbacks,
-                TotalClosedFeedbacks = totalClosedFeedbacks
+                TotalClosedFeedbacks = totalClosedFeedbacks,
+                TotalInProgress = totalInProgressFeedbacks,
+                ResolvedFeedback = totalResolvedFeedbacks
+                
             };
 
             return countsDto;
