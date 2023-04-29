@@ -452,6 +452,115 @@ only users with Moderator , Staff-admin can crate this
 You can only send feedback to students in your department
 ```
 
+#### (6) Staff reply to feedback
+```http
+  POST /api/feedbacks/{feedbackId}/reply"
+```
+```
+  reply body
+{
+    "content": "This  should be send from department or school not student sending this . I will closed this feedback . Thank you!",
+    "Status": 3
+}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `feedbackId`      | `int` | feedback Id|
+| `content`      | `string` | content of the reply|
+| `Status`      | `int` |  
+
+        Open = 0,
+        InProgress = 1,
+        Resolved = 2,
+        Closed = 3|
+
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+Reply added successfully
+```
+
+
+#### (7) Get all feedback in department
+```http
+  GET /api/departments/department-feedback/
+```
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+[
+    {
+        "id": 1,
+        "title": "Master Data-Science Scholarship",
+        "content": "This to notify all student that Master Data-Science Scholarship is life now you can now apply",
+        "senderId": 7,
+        "senderName": "Anonymous",
+        "senderFullName": "Anonymous",
+        "status": 0,
+        "isAnonymous": true,
+        "openFeedbackCount": 0,
+        "departmentId": 0,
+        "departmentName": null,
+        "assignedToId": null,
+        "assignedToName": null,
+        "dateCreated": "2023-04-26T13:39:35.5875212",
+        "targetAudience": null,
+        "feedbackReplies": []
+    },
+}
+
+
+#### (8) Get a specific feedback in department with replies
+
+```http
+  GET /api/departments/department-feedback/{feedbackId}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `feedbackId`      | `int` | feedback Id|
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+{
+    "id": 1,
+    "title": "Master Data-Science Scholarship",
+    "content": "This to notify all student that Master Data-Science Scholarship is life now you can now apply",
+    "senderId": 0,
+    "senderName": "Anonymous",
+    "senderFullName": "Anonymous",
+    "status": 3,
+    "isAnonymous": false,
+    "openFeedbackCount": 0,
+    "departmentId": 1,
+    "departmentName": null,
+    "assignedToId": null,
+    "assignedToName": null,
+    "dateCreated": "2023-04-26T13:39:35.5875212",
+    "targetAudience": null,
+    "feedbackReplies": [
+        {
+            "id": 2,
+            "feedbackId": 0,
+            "content": "This  should be send from department or school not student sending this . I will closed this feedback . Thank you!",
+            "userId": 9,
+            "userFullName": "Adey Salith",
+            "user": null,
+            "modifiedAt": null,
+            "dateCreated": "0001-01-01T00:00:00",
+            "isPublic": true,
+            "updatedAt": "0001-01-01T00:00:00",
+            "status": 3
+        }
+    ]
+}
 
 # STUDENT AREA
 #### (1) Student - view user Profile
