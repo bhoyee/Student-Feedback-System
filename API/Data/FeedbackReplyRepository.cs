@@ -101,5 +101,12 @@ namespace API.Data
 
  
         }
+        public async Task<List<FeedbackReply>> GetFeedbackRepliesByFeedbackIdAsync(int feedbackId)
+        {
+            return await _context.FeedbackReplies
+                .Where(f => f.FeedbackId == feedbackId)
+                .ToListAsync();
+        }
+
     }
 }

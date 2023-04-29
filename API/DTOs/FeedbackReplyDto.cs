@@ -12,6 +12,7 @@ namespace API.DTOs
         public int FeedbackId { get; set; }
         public string Content { get; set; }
         public int UserId { get; set; }
+         public string UserFullName { get; set; }
          public AppUser User { get; set; }
         public DateTime? ModifiedAt { get; set; }
         public DateTime DateCreated { get; set; }

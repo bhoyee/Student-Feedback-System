@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using API.Data;
 using API.DTOs;
@@ -31,9 +32,11 @@ namespace API.Controllers
         public readonly DataContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<DepartmentsController> _logger;
+        private readonly IFeedbackReplyRepository _feedbackReplyRepository;
 
-        public DepartmentsController(ILogger<DepartmentsController> logger,IHttpContextAccessor httpContextAccessor, DataContext context, UserManager<AppUser> userManager, IDeparmtentRepo departmentRepo, IMapper mapper, IUserRepository userRepository, IFeedbackRepository feedbackRepository)
+        public DepartmentsController(IFeedbackReplyRepository feedbackReplyRepository, ILogger<DepartmentsController> logger,IHttpContextAccessor httpContextAccessor, DataContext context, UserManager<AppUser> userManager, IDeparmtentRepo departmentRepo, IMapper mapper, IUserRepository userRepository, IFeedbackRepository feedbackRepository)
         {
+            _feedbackReplyRepository = feedbackReplyRepository;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _context = context;
@@ -254,6 +257,56 @@ namespace API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error in retrieving record from database");
             }
         }
+
+        // get specific feedback with replies (staff)
+[Authorize(Roles = "Staff-admin,Moderator")]
+[HttpGet("department-feedback/{feedbackId}")]
+public async Task<ActionResult<FeedbackDto>> GetFeedback(int feedbackId)
+{
+    var currentUser = await _context.Users.SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
+    if (currentUser == null)
+    {
+        return NotFound($"Unable to retrieve user with username {User.Identity.Name}");
+    }
+
+    var feedback = await _context.Feedbacks
+        .Include(f => f.Sender)
+        .Include(f => f.Replies).ThenInclude(r => r.User)
+        .FirstOrDefaultAsync(f => f.Id == feedbackId && f.DepartmentId == currentUser.DepartmentId);
+
+    if (feedback == null)
+    {
+        _logger.LogInformation($"Feedback with ID {feedbackId} not found.");
+        return NotFound($"Feedback with ID {feedbackId} not found.");
+    }
+
+    var senderName = feedback.IsAnonymous ? "Anonymous" : feedback.Sender.FullName;
+
+    var feedbackDto = new FeedbackDto
+    {
+        Id = feedback.Id,
+        Title = feedback.Title,
+        Content = feedback.Content,
+        DateCreated = feedback.DateCreated,
+        DepartmentId = feedback.DepartmentId,
+        Status = feedback.Status,
+        SenderName = senderName,
+        SenderFullName = senderName,
+        FeedbackReplies = feedback.Replies.Select(r => new FeedbackReplyDto
+        {
+            Id = r.Id,
+            Content = r.Content,
+            ModifiedAt = r.ModifiedAt,
+            UserId = r.UserId,
+           // User = r.User == null ? null : new AppUser { FullName = r.User.FullName },
+           UserFullName = r.User.FullName, // Populate the UserFullName property with the full name of the user
+            IsPublic = r.IsPublic,
+            Status = (int?)r.Status,
+        }).ToList()
+    };
+
+    return feedbackDto;
+}
 
 
         // Assuming you have a FeedbackRepository class with a GetFeedbackByIdAsync method

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.DTOs;
+using API.Entities;
 
 namespace API.Interfaces
 {
@@ -16,6 +17,8 @@ namespace API.Interfaces
         Task DeleteFeedbackReplyAsync(int feedbackReplyId);
         Task<FeedbackReplyDto> GetFeedbackReplyAsync(int feedbackReplyId);
         Task<FeedbackReplyDto> GetFeedbackReplyByIdAsync(int feedbackReplyId);
+        Task<List<FeedbackReply>> GetFeedbackRepliesByFeedbackIdAsync(int feedbackId);
+
 
 
        

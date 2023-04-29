@@ -403,6 +403,7 @@ namespace API.Data
         public async Task<List<FeedbackDto>> GetAllFeedbacksByDepartmentIdAsync(int departmentId)
         {
             var feedbacks = await _context.Feedbacks
+                .Include(f => f.Replies) // Include feedback replies
                 .Where(f => f.DepartmentId == departmentId)
                 .ToListAsync();
 
