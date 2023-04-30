@@ -319,6 +319,38 @@ List of role names (Case-sensitive)
     "totalOpenFeedback": 1
 }
 ```
+
+#### (6) Admin Delete User
+```http
+  POST /api/users/{id}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `id`      | `int` | user id that need to be deleted |
+
+#### status : 200 ok
+
+```
+User deleted successfully
+```
+
+#### (7) Admin Delete User
+```http
+  POST /api/users/{id}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `id`      | `int` | user id that need to be deleted |
+
+#### status : 200 ok
+
+```
+User deleted successfully
+```
+
+
 # STAFF AREA
 
 Staff with Staff-admin role can perform these tasks
@@ -977,5 +1009,85 @@ Sample response
     "closedFeedbacks": 0,
     "inProgressFeedback": 0,
     "resolvedFeedback": 1
+}
+```
+
+# PETITION API
+
+#### (1) Create Petition (must be login student with verify token in the header)
+```http
+  POST /api/petition/
+```
+```
+  sample of raw body
+{
+  "title": "petition",
+  "message": "Message of the petition",
+  "anonymous": 1,
+  "departmentId": 1
+}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `petitionType`      | `string` | General / Department |
+| `title`      | `string` | petition title  |
+| `message`      | `string` | petittion content |
+| `anonymous`      | `int` | 1 = true , 0 = false |
+| `departmentId`      | `int` | department where the petittion is going |
+
+#### status : 200 ok
+
+
+#### (2) Vote for Petition
+```http
+  POST /api/votes/{petitionId}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `petitionId`      | `string` | Petition Id |
+
+#### status : 200 ok
+
+
+#### (2) View Petitions with total votes
+```http
+  POST /api/petition/petitionsWithVotes
+```
+
+
+#### status : 200 ok
+
+Sample response
+```
+{
+    "id": 36,
+    "title": "Title of the petition",
+    "description": "Message of the petition",
+    "votes": 3
+}
+```
+
+
+#### (3) View Specific Petition with total votes
+```http
+  POST /api/petition/petitionsWithVotes/{petitionId}
+
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `petitionId`      | `string` | Petition Id |
+
+#### status : 200 ok
+
+Sample response
+```
+{
+    "id": 36,
+    "title": "Title of the petition",
+    "description": "Message of the petition",
+    "votes": 3
 }
 ```
