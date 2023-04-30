@@ -22,7 +22,7 @@ Note - feedback Status :
 
 ``` 
 
-Note - Sameple Login Accounts :
+Note - Sample Login Accounts :
                 
         admin = admin/StuFeed0#,
         Head Of Staff = james/StuFeed0#,
@@ -101,7 +101,63 @@ Registration Successful . Check email to verify your account
         "Student"
     ]
 }
+
+# Forgot-password
+#### (3) User need to provide registered email
+
+```http
+  POST /api/account/forgot-password
 ```
+```
+   body
+{
+  "email": "email@hull.ac.uk"
+}
+```
+#### status : 200 ok
+
+### Sample Returns: 
+Note : token will be included in the link what will be generated 
+```
+Reset password detail send to your mail
+
+```
+
+# Reset-password
+#### (4) User click the link send to mail to resent the password , which in
+
+```http
+  POST /api/account/reset-password
+```
+```
+You need to verify the token coming via the link if they re valid 
+
+  body sample
+{
+    "email": "a.g.plex-2021@hull.ac.uk",
+    "token": "CfDJ8JQtqeclVCw%3D%3D",
+    "password": "mynewpassword123",
+    "confirmpassword": "mynewpassword123",
+
+}
+
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `token`      | `string` | token will be inside the url link the user will click from mail
+| `password`      | `string` | **Required**. 
+| `confirmpassword`      | `string` | **Required**.
+
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+Password changed successfully
+```
+
+
 # ADMIN AREA
 #### (1) Get all Staffs per department
 
@@ -562,6 +618,129 @@ Reply added successfully
     ]
 }
 
+#### (9) Staff assign feedback to another staff
+```http
+  POST /api/feedbacks/{feedbackId}/assign
+```
+```
+body 
+
+{
+ "recipientId": 12
+}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `feedbackId`      | `int` | feedbackId that need to be assigned |
+
+| `recipientId`      | `int` | this is that staff Id that the feedback with be assgin to |
+
+#### status : 200 ok
+
+### Sample Returns: 
+```
+Feedback with ID {feedbackId} has been assigned to user with ID {recipientId}.
+```
+
+
+#### (10) staff view /get feedback assigined to them
+```http
+  GET /api/feedbacks/assigned
+```
+#### status : 200 ok
+
+### Sample Returns: 
+```
+[
+    {
+        "id": 1,
+        "title": "Master Data-Science Scholarship",
+        "content": "This to notify all student that Master Data-Science Scholarship is life now you can now apply",
+        "senderId": 0,
+        "senderName": "Anonymous",
+        "senderFullName": null,
+        "status": 2,
+        "isAnonymous": true,
+        "openFeedbackCount": 0,
+        "departmentId": 0,
+        "departmentName": "data sc",
+        "assignedToId": null,
+        "assignedToName": null,
+        "dateCreated": "2023-04-26T13:39:35.5875212",
+        "targetAudience": null,
+        "feedbackReplies": [
+            {
+                "id": 2,
+                "feedbackId": 0,
+                "content": "This  should be send from department or school not student sending this . I will closed this feedback . Thank you!",
+                "userId": 9,
+                "userFullName": "Peter Jide",
+                "user": null,
+                "modifiedAt": null,
+                "dateCreated": "0001-01-01T00:00:00",
+                "isPublic": true,
+                "updatedAt": "0001-01-01T00:00:00",
+                "status": null
+            },
+            {
+                "id": 3,
+                "feedbackId": 0,
+                "content": "This is not for you . Thank you!",
+                "userId": 9,
+                "userFullName": "Peter Jide",
+                "user": null,
+                "modifiedAt": null,
+                "dateCreated": "0001-01-01T00:00:00",
+                "isPublic": true,
+                "updatedAt": "0001-01-01T00:00:00",
+                "status": null
+            }
+        ]
+    }
+]
+
+```
+
+#### (11) Getting department feedback count 
+```http
+  GET /api/departments/dept/{departmentId}/feedback-counts
+```
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `departmentId`      | `int` | department ID|
+
+
+#### status : 200 ok
+
+### Sample Returns: 
+
+```
+{
+    "totalFeedbacks": 34,
+    "totalOpenFeedbacks": 32,
+    "totalClosedFeedbacks": 1,
+    "totalInProgress": 1
+}
+```
+#### (12) Get all list of closed feedback in dept
+```http
+  GET /api/departments/{id}/closed-feedbacks
+```
+#### (13) Get all list of open feedback in dept
+```http
+  GET /api/departments/{id}/open-feedbacks
+```
+#### (13) Get all list of inprogress feedback in dept
+```http
+  GET /api/departments/{id}/inprogress-feedbacks
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `id`      | `int` | department ID
+
+
 # STUDENT AREA
 #### (1) Student - view user Profile
 ```http
@@ -741,19 +920,62 @@ Note - feedback Status :
     }
 ]
 ```
-
-
-#### Get item
+#### (6) Student - Get all feedback logined with Student role user created
 
 ```http
-  GET /api/items/${id}
+  GET /api/feedbacks/user/{userId}
 ```
 
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
-| `id`      | `string` | **Required**. Id of item to fetch |
+| `userId`      | `int` | user login Id |
 
-#### add(num1, num2)
+#### status : 200 ok
 
-Takes two numbers and returns the sum.
 
+#### (7) Student - student viewing specific feedback with replies
+```http
+  GET /api/feedbacks/user/feedback/{feedbackId}
+```
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `feedbackId`      | `int` | feedbackId  |
+
+#### status : 200 ok
+
+
+#### (8) Student - student reply to a feedback
+```http
+  POST /api/feedbacks/user/{feedbackId}/reply
+```
+```
+  reply body
+{
+    "content": "Just testing this reply out"
+}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `feedbackId`      | `int` | feedbackId  |
+| `content`      | `string` | content of the response  |
+
+#### status : 200 ok
+
+
+#### (9) Student - get count of feedbacks
+```http
+  GET /api/feedbacks/feedback-counts
+```
+
+#### status : 200 ok
+```
+Sample response
+{
+    "totalFeedbacks": 2,
+    "openFeedbacks": 1,
+    "closedFeedbacks": 0,
+    "inProgressFeedback": 0,
+    "resolvedFeedback": 1
+}
+```

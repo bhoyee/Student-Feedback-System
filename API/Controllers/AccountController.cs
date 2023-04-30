@@ -184,25 +184,25 @@ namespace API.Controllers
         }
 
 
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword(ResetPasswordDto model)
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordDto model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                // Don't reveal that the user does not exist or is not confirmed
-                return Ok();
-            }
-
-            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
-            if (result.Succeeded)
-            {
-                return Ok("Password changed successfully");
-            }
-
-            // If we got this far, something failed, redisplay form
-            return BadRequest();
+            // Don't reveal that the user does not exist
+            return Ok();
         }
+
+        var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
+
+        return Ok("Password reset successful.");
+    }
+
 
 
 

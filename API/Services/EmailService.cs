@@ -21,17 +21,15 @@ namespace API.Services
         {
             _smtpSettings = smtpSettings.Value;
         }
-        
-        public async Task SendnewEmailAsync(string email, string subject, string resetUrl)
+
+        public async Task SendnewEmailAsync(string email, string subject, string message)
         {
             var emailMessage = new MimeMessage();
             emailMessage.From.Add(new MailboxAddress("Student Feedback", "s.feedback@outlook.com"));
             emailMessage.To.Add(new MailboxAddress("", email));
             emailMessage.Subject = subject;
-            emailMessage.Body = new TextPart("html")
-            {
-                Text = $"<p>Please click <a href='{resetUrl}'>here</a> to reset your password.</p>"
-            };
+            emailMessage.Body = new TextPart("html") { Text = message };
+            
 
             using (var client = new MailKit.Net.Smtp.SmtpClient())
             {
@@ -120,7 +118,6 @@ namespace API.Services
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
-
     }
 
 }
