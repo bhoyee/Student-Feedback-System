@@ -32,6 +32,9 @@ namespace API.Interfaces
 
         Task<IEnumerable<FeedbackDto>> GetFeedbackForStudentAsync(string studentId);
 
+        Task DeleteAsync(Feedback feedback);
+        void Detach(Feedback feedback);
+        Task<Feedback> iGetFeedbackByIdAsync(int id);
 
 
 

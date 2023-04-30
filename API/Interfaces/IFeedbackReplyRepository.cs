@@ -19,6 +19,10 @@ namespace API.Interfaces
         Task<FeedbackReplyDto> GetFeedbackReplyByIdAsync(int feedbackReplyId);
         Task<List<FeedbackReply>> GetFeedbackRepliesByFeedbackIdAsync(int feedbackId);
 
+        Task<List<FeedbackReply>> GetRepliesByFeedbackIdAsync(int feedbackId);
+        Task DeleteAsync(FeedbackReply reply);
+
+
 
 
        

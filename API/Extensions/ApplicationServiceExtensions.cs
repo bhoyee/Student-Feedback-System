@@ -17,8 +17,14 @@ namespace API.Extensions
 {
     public static class ApplicationServiceExtensions
     {
+        public static IServiceCollection AddPetitionNotificationService(this IServiceCollection services)
+        {
+            services.AddHostedService<PetitionNotificationService>();
+            return services;
+        }
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration config)
         {
+            
             services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPhotoService, PhotoService>();
@@ -32,7 +38,6 @@ namespace API.Extensions
             services.AddScoped<IDeparmtentRepo, DepartmentRepository>();
             services.AddScoped<IPetitionRepository, PetitionRepository>();
             services.AddAutoMapper(typeof(AutoMapperProfiles).Assembly);
-          
 
             services.AddDbContext<DataContext>(options =>
             {

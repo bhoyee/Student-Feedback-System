@@ -8,7 +8,9 @@ using API.Entities;
 using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using static API.Controllers.FeedbacksController;
 
 namespace API.Data
 {
@@ -152,20 +154,34 @@ namespace API.Data
         }
 
 
-
-    public async Task DeleteFeedbackAsync(int feedbackId)
+public async Task<Feedback> iGetFeedbackByIdAsync(int id)
+{
+    return await _context.Feedbacks
+        .Include(f => f.Replies)
+        .FirstOrDefaultAsync(f => f.Id == id);
+}
+public async Task DeleteFeedbackAsync(int feedbackId)
+{
+    var feedback = await _context.Feedbacks.FindAsync(feedbackId);
+    if (feedback == null)
     {
-                var feedback = await _context.Feedbacks.FindAsync(feedbackId);
-
-                if (feedback != null)
-                {
-                    //throw new EntityNotFoundException(nameof(Feedback), feedbackId);
-                    
-                    _context.Feedbacks.Remove(feedback);
-                    await _context.SaveChangesAsync();
-                }
-
+        throw new NotFoundException("Feedback not found");
     }
+    try
+    {
+        _context.Feedbacks.Remove(feedback);
+        await _context.SaveChangesAsync();
+    }
+    catch (DbUpdateException ex)
+    {
+        if (ex.InnerException != null && ex.InnerException.InnerException != null
+            && ex.InnerException.InnerException is SqlException sqlEx 
+            && sqlEx.Number == 547)
+   
+        throw;
+    }
+}
+
 
     // public async Task<FeedbackDto> GetFeedbackByIdAsync(int feedbackId)
     // {
@@ -429,31 +445,53 @@ namespace API.Data
             return feedbackDtos;
         }
 
-    public async Task<IEnumerable<FeedbackDto>> GetFeedbackForStudentAsync(string studentId)
-    {
-        var student = await _userManager.FindByIdAsync(studentId);
-        var departmentId = student.DepartmentId;
+        public async Task<IEnumerable<FeedbackDto>> GetFeedbackForStudentAsync(string studentId)
+        {
+            var student = await _userManager.FindByIdAsync(studentId);
+            var departmentId = student.DepartmentId;
 
-        var feedback = await _context.Feedbacks
-            .Where(f =>
-                (f.TargetAudience == FeedbackTargetAudience.Departments && f.DepartmentId == departmentId) ||
-                f.TargetAudience == FeedbackTargetAudience.AllStudents ||
-                f.Recipients.Any(r => r.RecipientId == int.Parse(studentId)))
-            .Where(f => f.SenderId != int.Parse(studentId)) // Exclude feedback created by the student
-            .OrderByDescending(f => f.DateCreated) // Order by latest feedback first
-            .Select(f => new FeedbackDto
-            {
-                Id = f.Id,
-                Title = f.Title,
-                Content = f.Content,
-                SenderName = $"{f.Sender.UserName}",
-                DateCreated = f.DateCreated,
-                //IsRead = f.Recipients.Any(r => r.RecipientId == studentId && r.IsRead)
-            })
-            .ToListAsync();
+            var feedback = await _context.Feedbacks
+                .Where(f =>
+                    (f.TargetAudience == FeedbackTargetAudience.Departments && f.DepartmentId == departmentId) ||
+                    f.TargetAudience == FeedbackTargetAudience.AllStudents ||
+                    f.Recipients.Any(r => r.RecipientId == int.Parse(studentId)))
+                .Where(f => f.SenderId != int.Parse(studentId)) // Exclude feedback created by the student
+                .OrderByDescending(f => f.DateCreated) // Order by latest feedback first
+                .Select(f => new FeedbackDto
+                {
+                    Id = f.Id,
+                    Title = f.Title,
+                    Content = f.Content,
+                    SenderName = $"{f.Sender.UserName}",
+                    DateCreated = f.DateCreated,
+                    //IsRead = f.Recipients.Any(r => r.RecipientId == studentId && r.IsRead)
+                })
+                .ToListAsync();
 
-        return feedback;
-    }
+            return feedback;
+        }
+
+        // public async Task DeleteAsync(Feedback feedback)
+        // {
+        //     _context.Feedbacks.Remove(feedback);
+        //     await _context.SaveChangesAsync();
+        // }
+
+        public async Task DeleteAsync(Feedback feedback)
+        {
+            // Delete all replies attached to this feedback
+            var replies = await _context.FeedbackReplies.Where(r => r.FeedbackId == feedback.Id).ToListAsync();
+            _context.FeedbackReplies.RemoveRange(replies);
+
+            // Delete the feedback
+            _context.Feedbacks.Remove(feedback);
+            await _context.SaveChangesAsync();
+        }
+
+        public void Detach(Feedback feedback)
+        {
+            _context.Entry(feedback).State = EntityState.Detached;
+        }
 
 
 

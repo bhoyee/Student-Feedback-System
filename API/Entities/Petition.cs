@@ -12,7 +12,7 @@ namespace API.Entities
         public string Title { get; set; }   
         public string Message { get; set; }
         public DateTime Created { get; set; } = DateTime.Now;
-        public int Anonymous { get; set; } = 0;
+        public int Anonymous { get; set; }
         public string Status { get; set; } = "Pending";
 
         public PetitionStatus PetitionStatus { get; set; }

@@ -61,44 +61,45 @@ namespace API.Controllers
 
         //     return Ok(feedbackDtos);
         // }
+        
         // get  user feedback
-[HttpGet("user/{userId}")]
-public async Task<IActionResult> GetUserFeedbacks(int userId)
-{
-    var feedbacks = await _context.Feedbacks
-        .Include(f => f.Sender)
-        .Include(f => f.Department)
-        .Include(f => f.AssignedTo)
-        .Include(f => f.Replies) // include feedback replies
-        .Where(f => f.SenderId == userId)
-        .OrderByDescending(f => f.DateCreated)
-        .ToListAsync();
-
-    var feedbackDtos = feedbacks.Select(f => new FeedbackDto
-    {
-        Id = f.Id,
-        Title = f.Title,
-        Content = f.Content,
-        SenderName = f.Sender != null ? f.Sender.UserName : null,
-        DepartmentName = f.Department != null ? f.Department.DepartmentName : null,
-        AssignedToName = f.AssignedTo != null ? f.AssignedTo.UserName : null,
-        DateCreated = f.DateCreated,
-        FeedbackReplies = f.Replies.Select(fr => new FeedbackReplyDto
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetUserFeedbacks(int userId)
         {
-            Id = fr.Id,
-            FeedbackId = fr.FeedbackId,
-            Content = fr.Content,
-            IsPublic = fr.IsPublic,
-            UserId = fr.UserId,
-           // UserFullName = fr.User.UserName,
-            Status = (int?)fr.Status,
-           // Status = fr.Status,
-            UpdatedAt = fr.UpdatedAt
-        }).ToList()
-    });
+            var feedbacks = await _context.Feedbacks
+                .Include(f => f.Sender)
+                .Include(f => f.Department)
+                .Include(f => f.AssignedTo)
+                .Include(f => f.Replies) // include feedback replies
+                .Where(f => f.SenderId == userId)
+                .OrderByDescending(f => f.DateCreated)
+                .ToListAsync();
 
-    return Ok(feedbackDtos);
-}
+            var feedbackDtos = feedbacks.Select(f => new FeedbackDto
+            {
+                Id = f.Id,
+                Title = f.Title,
+                Content = f.Content,
+                SenderName = f.Sender != null ? f.Sender.UserName : null,
+                DepartmentName = f.Department != null ? f.Department.DepartmentName : null,
+                AssignedToName = f.AssignedTo != null ? f.AssignedTo.UserName : null,
+                DateCreated = f.DateCreated,
+                FeedbackReplies = f.Replies.Select(fr => new FeedbackReplyDto
+                {
+                    Id = fr.Id,
+                    FeedbackId = fr.FeedbackId,
+                    Content = fr.Content,
+                    IsPublic = fr.IsPublic,
+                    UserId = fr.UserId,
+                // UserFullName = fr.User.UserName,
+                    Status = (int?)fr.Status,
+                // Status = fr.Status,
+                    UpdatedAt = fr.UpdatedAt
+                }).ToList()
+            });
+
+            return Ok(feedbackDtos);
+        }
 
 
         //user getting individual feedback
@@ -486,12 +487,13 @@ public async Task<IActionResult> GetUserFeedbacks(int userId)
             return NoContent();
         }
         
-        [HttpDelete("{feedbackId}")]
-        public async Task<IActionResult> DeleteFeedback(int departmentId, int feedbackId)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteFeedback(int id)
         {
-            await _feedbackRepository.DeleteFeedbackAsync(feedbackId);
+            await _feedbackRepository.DeleteFeedbackAsync(id);
             return NoContent();
         }
+
         
         [HttpGet("{feedbackId}/replies")]
         public async Task<IActionResult> GetFeedbackReplies(int departmentId, int feedbackId)
@@ -782,7 +784,7 @@ public async Task<IActionResult> GetUserFeedbacks(int userId)
                 ClosedFeedbacks = closedFeedbacks,
                 InProgressFeedback = inProgressFeedbacks,
                 ResolvedFeedback = resolvedFeedbacks,
-                
+
                 
                 
             
@@ -819,6 +821,26 @@ public async Task<IActionResult> GetUserFeedbacks(int userId)
 
             return NoContent();
         }
+
+
+// [HttpDelete("del/{id}")]
+// public async Task<IActionResult> DeleteFeedback(int id)
+// {
+//     var feedback = await _feedbackRepository.iGetFeedbackByIdAsync(id);
+//     if (feedback == null)
+//     {
+//         return NotFound();
+//     }
+
+//     await _feedbackRepository.DeleteAsync(feedback);
+
+//     return Ok(new { message = "Feedback deleted successfully" });
+// }
+
+
+
+
+
 
         public class NotFoundException : Exception
         {

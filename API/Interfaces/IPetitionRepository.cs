@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
 using API.Helpers;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace API.Interfaces
 {
@@ -19,5 +20,10 @@ namespace API.Interfaces
         Task<PetitionDto> GetPetitionAsync(string status);
 
         Task<Petition> AddPetition(Petition petition);
+        Task<IDbContextTransaction> BeginTransactionAsync(); // add this method
+
+        Task<List<Petition>> GetAllPetitionsAsync();
+
+
     }
 }

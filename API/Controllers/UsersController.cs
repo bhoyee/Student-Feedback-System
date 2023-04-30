@@ -243,6 +243,27 @@ namespace API.Controllers
             return Ok(totalStudents);
         }
 
+        // admin deleting user
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound("No such user found");
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+            return Ok("User deleted successfully");
+        }
+
+
 
     }
 }

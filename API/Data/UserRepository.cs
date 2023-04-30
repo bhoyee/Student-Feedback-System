@@ -166,19 +166,37 @@ namespace API.Data
                 throw new UnauthorizedAccessException("User must have staff role to access this resource");
             }
         }
- public async Task<IEnumerable<AppUser>> GetUsersByDepartmentIdAsync(int departmentId)
-{
-    var studentIds = await _context.Users
-        .Where(u => u.DepartmentId == departmentId && u.UserRoles.Any(ur => ur.Role.Name == "Student"))
-        .Select(s => s.Id)
-        .ToListAsync();
+        public async Task<IEnumerable<AppUser>> GetUsersByDepartmentIdAsync(int departmentId)
+        {
+            var studentIds = await _context.Users
+                .Where(u => u.DepartmentId == departmentId && u.UserRoles.Any(ur => ur.Role.Name == "Student"))
+                .Select(s => s.Id)
+                .ToListAsync();
 
-    var students = await _context.Users
-        .Where(s => studentIds.Contains(s.Id))
-        .ToListAsync();
+            var students = await _context.Users
+                .Where(s => studentIds.Contains(s.Id))
+                .ToListAsync();
 
-    return students;
-}
+            return students;
+        }
+            // public async Task<List<int>> GetUserIdsByRoleAsync(List<string> roles, int departmentId)
+            // {
+            //     var userIds = await _context.UserRoles
+            //         .Where(ur => roles.Contains(ur.Role.Name) && ur.User.DepartmentId == departmentId)
+            //         .Select(ur => ur.UserId)
+            //         .ToListAsync();
+
+            //     return userIds;
+            // }
+
+            public async Task<List<int>> GetUserIdsByRoleAsync(List<string> roleNames)
+            {
+                return await _context.UserRoles
+                    .Where(ur => roleNames.Contains(ur.Role.Name))
+                    .Select(ur => ur.UserId)
+                    .ToListAsync();
+            }
+
 
 
     }

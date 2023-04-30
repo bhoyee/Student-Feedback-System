@@ -42,6 +42,7 @@ namespace API
             services.AddApplicationServices(_config);
             services.AddControllers();
             services.AddCors();
+            
           //  services.AddScoped<IUserTwoFactorTokenProvider<AppUser>, EmailTokenProvider<AppUser>>();
             //services.AddScoped<IUserTwoFactorTokenProvider<ApplicationUser>, EmailTokenProvider<ApplicationUser>>();
             

@@ -107,6 +107,18 @@ namespace API.Data
                 .Where(f => f.FeedbackId == feedbackId)
                 .ToListAsync();
         }
+        public async Task<List<FeedbackReply>> GetRepliesByFeedbackIdAsync(int feedbackId)
+        {
+            return await _context.FeedbackReplies
+                .Where(r => r.FeedbackId == feedbackId)
+                .ToListAsync();
+        }
+        public async Task DeleteAsync(FeedbackReply reply)
+        {
+            _context.FeedbackReplies.Remove(reply);
+            await _context.SaveChangesAsync();
+        }
+
 
     }
 }

@@ -10,10 +10,11 @@ using API.Entities;
 using API.DTOs;
 using Microsoft.EntityFrameworkCore;
 using API.Data;
+using System.Security.Claims;
 
 namespace API.Controllers
 {
-    [Authorize]
+    
     public class VotesController : BaseApiController
     {
         public readonly IPetitionRepository _petitionRepository;
@@ -30,40 +31,57 @@ namespace API.Controllers
 
         }
 
-        [HttpPost("{id}")]
-        public async Task<ActionResult> AddVote(int id)
-        {
-            var sourceUserId = User.GetUserId();
-            
-            var votedPetition = await _petitionRepository.GetPetitionByIdAsync(id);
-            var sourceUser = await _votesRepository.GetPetitonWithVotes(sourceUserId);
-            
+[HttpPost("{id}")]
+[Authorize(Roles = "Student")]
+public async Task<IActionResult> AddVote(int id)
+{
+    var sourceUserId = User.GetUserId();
 
-            //check petition status
-            if (votedPetition == null) return NotFound("No such petition");
+    // Check if user has already voted on the petition
+    var userVote = await _votesRepository.GetUserVote(sourceUserId, id);
+    if (userVote != null)
+    {
+        return BadRequest("You have already voted on this petition");
+    }
 
-            var userVote = await _votesRepository.GetUserVote(sourceUserId, votedPetition.Id);
+    // Get the petition
+    var votedPetition = await _petitionRepository.GetPetitionByIdAsync(id);
+    if (votedPetition == null)
+    {
+        return NotFound("No such petition");
+    }
 
-            if (userVote != null) return BadRequest("You already vote on this Petition");
+    // Check if the user who created the petition is trying to vote on it
+    if (votedPetition.UserId == sourceUserId)
+    {
+        return BadRequest("You cannot vote on your own petition");
+    }
 
-            userVote = new Vote
-            {
-                UserId = sourceUserId,
-                PetitionId = votedPetition.Id
+    // Check if the user is a student
+    if (!User.IsInRole("Student"))
+    {
+        return Forbid("You are not authorised to vote");
+    }
 
-                // VotedUserId = sourceUserId,
-                // SourcePetitionId = 5
-        
-                
-            };
+    // Add the user's vote to the petition
+    var vote = new Vote
+    {
+        UserId = sourceUserId,
+        PetitionId = votedPetition.Id,
+        VotedAt = DateTime.UtcNow // set the VotedAt time to the current UTC time
+    };
 
-            //sourceUser.Votes.Add(userVote);
+    _context.Votes.Add(vote);
 
-            if (await _userRepository.SaveAllAsync()) return Ok();
+    if (await _context.SaveChangesAsync() > 0)
+    {
+        return Ok("Vote Successfully");
+    }
 
-            return BadRequest("faile to vote petition");
+    return BadRequest("Failed to vote petition");
+}
 
-        }
+
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<VoteDto>>> GetUserPetitions(string predicate)

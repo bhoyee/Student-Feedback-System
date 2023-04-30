@@ -9,6 +9,7 @@ using API.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace API.Data
 {
@@ -72,10 +73,21 @@ namespace API.Data
 
         public async Task<Petition> AddPetition(Petition petition)
         {
-            var result = await _context.Petitions.AddAsync(petition);
+            await _context.Petitions.AddAsync(petition);
             await _context.SaveChangesAsync();
-            return result.Entity;
+            return petition;
         }
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
+        }
+        public async Task<List<Petition>> GetAllPetitionsAsync()
+        {
+            return await _context.Petitions
+                .Include(p => p.Votes)
+                .ToListAsync();
+        }
+
 
     }
 }

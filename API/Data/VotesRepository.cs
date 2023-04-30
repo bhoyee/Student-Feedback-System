@@ -29,8 +29,10 @@ namespace API.Data
 
         public async Task<Vote> GetUserVote(int appUserSourceId, int votedPetitionId)
         {
-            return await _context.Votes.FindAsync(appUserSourceId, votedPetitionId);
+            return await _context.Votes
+                .SingleOrDefaultAsync(x => x.UserId == appUserSourceId && x.PetitionId == votedPetitionId);
         }
+
 
         public async Task<IEnumerable<VoteDto>> GetUserVotes(string predicate, int userid)
         {
