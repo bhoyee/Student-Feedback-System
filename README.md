@@ -50,6 +50,7 @@ List of role nme (Case-sensitive)
   Register body
 {
     "username": "string",
+    "Fullname": "string",
     "email": "string",
     "password": "string",
     "confirmpassword": "string",
@@ -60,6 +61,7 @@ List of role nme (Case-sensitive)
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `username` | `string` | **Required* |
+| `Fullname` | `string` | **Required* |
 | `email` | `string` | ** must be sch email |
 | `password` | `string` | **Required* |
 | `confirmpassword` | `string` | **Required* |
